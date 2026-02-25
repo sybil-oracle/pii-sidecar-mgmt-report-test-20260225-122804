@@ -1,0 +1,42 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>TC-SYS-006</title><link rel="stylesheet" href="report-style.css"></head><body>
+<h1>TC-SYS-006 — Expire and purge sessions after configurable TTL</h1>
+<table>
+<tr><th>Requirement</th><td>SYS-006</td></tr>
+<tr><th>Test Date</th><td>2026-02-23T12:12Z</td></tr>
+<tr><th>Tester</th><td>Sybil Oracle (automated)</td></tr>
+</table>
+
+<h2>Procedure</h2>
+<ol>
+<li>Insert an expired session directly into SQLite (expires_at = now - 100s).</li>
+<li>Insert a mapping row for that session.</li>
+<li>Invoke <code>Vault.purge_expired()</code> programmatically.</li>
+<li>Query sessions and mappings tables.</li>
+<li>Attempt restore on the expired session via the API.</li>
+</ol>
+
+<h2>Results</h2>
+<pre>Step 1-2 — Direct DB insert of expired session "ttl-test" with mapping
+
+Step 3 — Purge:
+  Purged: 1
+
+Step 4 — Post-purge queries:
+  Session after purge: None
+  Mappings after purge: None
+  (Both session and mapping rows deleted via CASCADE)
+
+Step 5 — Restore via API:
+  {"restored_text":"«PERS_1» is here","restored_count":0,"mapping_version":0}
+  (Placeholders left unchanged — fail-open behavior)</pre>
+
+<h2>Analysis</h2>
+<ul>
+<li>✅ purge_expired() deleted the expired session</li>
+<li>✅ CASCADE delete removed associated mappings</li>
+<li>✅ Restore on expired session returns restoredCount=0 with placeholders unchanged</li>
+<li>ℹ️ No env var for TTL override; default is 7 days. Test used direct DB manipulation. TTL is configurable via Vault constructor parameter.</li>
+</ul>
+
+<div class="verdict pass">PASS</div>
+</body></html>

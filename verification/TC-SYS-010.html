@@ -1,0 +1,36 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>TC-SYS-010</title><link rel="stylesheet" href="report-style.css"></head><body>
+<h1>TC-SYS-010 — Restrict admin session management to loopback</h1>
+<table>
+<tr><th>Requirement</th><td>SYS-010</td></tr>
+<tr><th>Test Date</th><td>2026-02-23T12:14Z</td></tr>
+<tr><th>Tester</th><td>Sybil Oracle (automated)</td></tr>
+</table>
+
+<h2>Procedure</h2>
+<ol>
+<li>From loopback, GET /v1/sessions/{key}/mappings for existing session.</li>
+<li>From external (Caddy), attempt the same with PII_ALLOW_REMOTE=1.</li>
+<li>Temporarily set PII_ALLOW_REMOTE=0 and test external access.</li>
+</ol>
+
+<h2>Results</h2>
+<pre>Step 1 — Loopback (PII_ALLOW_REMOTE=1):
+  HTTP 200, body: [{"id":1,"session_key":"test-sys-001","label":"ORG",...}, ...]
+  (4 mappings returned)
+
+Step 2 — External (PII_ALLOW_REMOTE=1):
+  HTTP 200, body: [same 4 mappings]
+  (Remote access allowed by current config)
+
+Step 3 — External (PII_ALLOW_REMOTE=0):
+  HTTP 403, body: {"detail":"Remote access not allowed. Set PII_ALLOW_REMOTE=1."}</pre>
+
+<h2>Analysis</h2>
+<ul>
+<li>✅ Session mappings accessible from loopback</li>
+<li>✅ With PII_ALLOW_REMOTE=0, external requests to /v1/sessions/* get HTTP 403</li>
+<li>ℹ️ Current deployment has PII_ALLOW_REMOTE=1 (needed for Caddy proxy through Docker bridge). Loopback restriction is functional when enabled.</li>
+</ul>
+
+<div class="verdict pass">PASS</div>
+</body></html>

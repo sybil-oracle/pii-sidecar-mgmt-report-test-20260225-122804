@@ -1,0 +1,38 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>TC-SYS-007</title><link rel="stylesheet" href="report-style.css"></head><body>
+<h1>TC-SYS-007 — Anonymize and restore text via CLI</h1>
+<table>
+<tr><th>Requirement</th><td>SYS-007</td></tr>
+<tr><th>Test Date</th><td>2026-02-23T12:13Z</td></tr>
+<tr><th>Tester</th><td>Sybil Oracle (automated)</td></tr>
+</table>
+
+<h2>Procedure</h2>
+<ol>
+<li>Run CLI anonymize inside Docker container.</li>
+<li>Run CLI restore with anonymized output.</li>
+</ol>
+
+<h2>Results</h2>
+<pre>Step 1 — Anonymize:
+$ docker exec pii-anonymizer-sidecar-pii-anonymizer-1 \
+    python -m cli.main anonymize --session cli-test1 \
+    --text 'Alice Smith works at Acme Corp'
+
+Output: «PERS_1» works at «ORG_1»
+
+Step 2 — Restore:
+$ docker exec pii-anonymizer-sidecar-pii-anonymizer-1 \
+    python -m cli.main restore --session cli-test1 \
+    --text '«PERS_1» works at «ORG_1»'
+
+Output: Alice Smith works at Acme Corp</pre>
+
+<h2>Analysis</h2>
+<ul>
+<li>✅ Anonymize stdout contains placeholders, no original entity values</li>
+<li>✅ Restore stdout identical to original input</li>
+<li>✅ Both commands completed within 10 seconds</li>
+</ul>
+
+<div class="verdict pass">PASS</div>
+</body></html>

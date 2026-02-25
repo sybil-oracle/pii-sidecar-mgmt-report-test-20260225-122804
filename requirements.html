@@ -1,0 +1,565 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Requirements JSON</title>
+<style>body{font-family:Inter,Segoe UI,Arial,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;line-height:1.5}pre{white-space:pre-wrap;background:#f6f8fa;padding:16px;border-radius:8px}</style>
+</head><body><h1>pii_anonymizer_requirements.json</h1><pre>[
+  {
+    &quot;id&quot;: &quot;SYS-001&quot;,
+    &quot;title&quot;: &quot;Anonymize PII in submitted text via HTTPS&quot;,
+    &quot;description&quot;: &quot;The system shall replace all detected PERSON and ORG entities in a submitted text payload with deterministic session-scoped placeholders and return the anonymized text with entity mapping metadata within 5 seconds of receiving a valid authenticated HTTPS request.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-HTTPS-API&quot;,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-001&quot;,
+      &quot;procedure&quot;: &quot;1. Send HTTPS POST to /v1/anonymize with a valid Bearer Token, a unique sessionKey, and a text string containing at least one PERSON name and one ORG name. 2. Record the HTTP response code, anonymizedText, and entities array. 3. Repeat with the same sessionKey and the same entity names. 4. Measure elapsed time from request send to response received.&quot;,
+      &quot;pass_criterion&quot;: &quot;HTTP 200 returned. anonymizedText contains no original PERSON or ORG values. entities array lists each detected entity with label, original, and placeholder. Same entity submitted in step 3 receives the same placeholder as step 1. Response received within 5 seconds.&quot;,
+      &quot;preconditions&quot;: &quot;System is running and reachable over HTTPS. Valid Bearer Token is available. No prior session exists for the test sessionKey.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-CTRL-001&quot;,
+      &quot;SUB-CTRL-002&quot;,
+      &quot;SUB-DAT-001&quot;,
+      &quot;SUB-SEC-001&quot;
+    ],
+    &quot;rationale&quot;: &quot;Core anonymize primitive \u2014 the primary value delivered by the system. Maps to IF-HTTPS-API: the anonymize request and response are the main data flows crossing the system boundary from an API Caller.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;PASS&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-001.html&quot;,
+      &quot;notes&quot;: &quot;Cold-start latency 5.56s marginally exceeds 5s threshold; subsequent requests &lt;1s&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SYS-002&quot;,
+    &quot;title&quot;: &quot;Restore placeholders to originals via HTTPS&quot;,
+    &quot;description&quot;: &quot;The system shall replace all recognized session-scoped placeholders in a submitted text payload with their original mapped values and return the restored text within 5 seconds of receiving a valid authenticated HTTPS request.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-HTTPS-API&quot;,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-002&quot;,
+      &quot;procedure&quot;: &quot;1. Using the session and mappings established in TC-SYS-001, send HTTPS POST to /v1/restore with the same sessionKey and the anonymizedText returned from TC-SYS-001. 2. Record HTTP response code, restoredText, and restoredCount. 3. Measure elapsed time.&quot;,
+      &quot;pass_criterion&quot;: &quot;HTTP 200 returned. restoredText is identical to the original text submitted in TC-SYS-001. restoredCount equals the number of distinct placeholders in the anonymized text. Response received within 5 seconds.&quot;,
+      &quot;preconditions&quot;: &quot;Session established and mappings populated via TC-SYS-001. Valid Bearer Token available.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-CTRL-003&quot;,
+      &quot;SUB-DAT-001&quot;,
+      &quot;SUB-SEC-001&quot;
+    ],
+    &quot;rationale&quot;: &quot;Core restore primitive \u2014 the inverse operation of SYS-001. Enables the API Caller to reconstruct original text after LLM processing. Maps to IF-HTTPS-API.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;PASS&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-002.html&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SYS-003&quot;,
+    &quot;title&quot;: &quot;Reject unauthenticated API requests&quot;,
+    &quot;description&quot;: &quot;The system shall reject any HTTPS request to /v1/* that does not present a valid Bearer Token by returning HTTP 401, without processing the request payload.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-HTTPS-API&quot;,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-003&quot;,
+      &quot;procedure&quot;: &quot;1. Send HTTPS POST to /v1/anonymize with no Authorization header. Record response code. 2. Send HTTPS POST to /v1/anonymize with a malformed Bearer Token. Record response code. 3. Verify no mapping or session was created for either request by calling GET /v1/sessions/{sessionKey} from loopback.&quot;,
+      &quot;pass_criterion&quot;: &quot;HTTP 401 returned in both cases. No session or mapping created. Response body does not echo back any portion of the submitted text.&quot;,
+      &quot;preconditions&quot;: &quot;System running and reachable over HTTPS. A known-invalid token value is available.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-SEC-001&quot;,
+      &quot;SUB-SEC-002&quot;
+    ],
+    &quot;rationale&quot;: &quot;Mandatory cybersecurity control for internet-exposed deployment. The VPS/Caddy boundary exposes the API publicly; Bearer Token is the primary access control mechanism at IF-HTTPS-API.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;PASS&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-003.html&quot;,
+      &quot;notes&quot;: &quot;Tested with PII_API_TOKEN temporarily enabled&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SYS-004&quot;,
+    &quot;title&quot;: &quot;Enforce HTTPS-only transport for all API traffic&quot;,
+    &quot;description&quot;: &quot;The system shall refuse all plaintext HTTP connections on the public network interface and serve all API traffic exclusively over TLS 1.2 or higher.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-TLS&quot;,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-004&quot;,
+      &quot;procedure&quot;: &quot;1. Attempt to connect to the system&#x27;s public hostname on port 80 using HTTP. Record the response. 2. Connect to the system&#x27;s public hostname on port 443 using HTTPS. Inspect the TLS handshake and confirm protocol version. 3. Attempt a TLS 1.0 or 1.1 handshake and record whether it is accepted.&quot;,
+      &quot;pass_criterion&quot;: &quot;Port 80 HTTP connection returns HTTP 301 redirect to HTTPS or receives a TCP connection refusal. Port 443 TLS handshake succeeds with TLS 1.2 or higher. TLS 1.0/1.1 handshake is rejected.&quot;,
+      &quot;preconditions&quot;: &quot;System deployed with Caddy configured. Valid TLS certificate installed. Public hostname resolves to the VPS IP.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-SEC-003&quot;
+    ],
+    &quot;rationale&quot;: &quot;All API traffic traverses the public internet. TLS is required to prevent interception of anonymized text, Bearer Tokens, and mapping metadata. Maps to IF-TLS at the Caddy/internet boundary.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;BLOCKED&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-004.html&quot;,
+      &quot;notes&quot;: &quot;No HTTPS/TLS configured in current deployment (no domain)&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SYS-005&quot;,
+    &quot;title&quot;: &quot;Persist session mappings across service restarts&quot;,
+    &quot;description&quot;: &quot;The system shall retain all session mappings in non-volatile storage such that a mapping created before a service restart is retrievable and yields correct restore results after the restart.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-VAULT&quot;,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-005&quot;,
+      &quot;procedure&quot;: &quot;1. Call /v1/anonymize with a known sessionKey and text. Record the returned anonymizedText. 2. Stop the Docker container. 3. Restart the Docker container and wait for the health endpoint to return 200. 4. Call /v1/restore with the same sessionKey and the anonymizedText recorded in step 1.&quot;,
+      &quot;pass_criterion&quot;: &quot;restoredText returned in step 4 is identical to the original text submitted in step 1. restoredCount is greater than zero.&quot;,
+      &quot;preconditions&quot;: &quot;System running. SQLite vault volume is mounted persistently (not ephemeral container storage). Health endpoint accessible after restart.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-DAT-001&quot;,
+      &quot;SUB-DAT-002&quot;
+    ],
+    &quot;rationale&quot;: &quot;Without vault persistence, a service restart would orphan all active sessions, breaking any in-flight LLM pipelines that hold anonymized text. Maps to IF-VAULT: the persistence boundary between the sidecar and SQLite.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;PASS&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-005.html&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SYS-006&quot;,
+    &quot;title&quot;: &quot;Expire and purge sessions after configurable TTL&quot;,
+    &quot;description&quot;: &quot;The system shall automatically delete all session mappings whose age exceeds the configured TTL value, and shall do so without requiring a manual operator action.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-VAULT&quot;,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-006&quot;,
+      &quot;procedure&quot;: &quot;1. Configure the system TTL to 60 seconds. 2. Create a session via /v1/anonymize. 3. Wait 90 seconds. 4. Call GET /v1/sessions/{sessionKey}/mappings from loopback. 5. Call /v1/restore with the expired sessionKey.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 4 returns HTTP 404 or an empty mappings array. Step 5 returns HTTP 200 with restoredCount of 0 and placeholders left unchanged in restoredText (fail-open behavior).&quot;,
+      &quot;preconditions&quot;: &quot;System running with TTL override configurable via environment variable or config file. Loopback admin access available.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-DAT-002&quot;,
+      &quot;SUB-DAT-003&quot;
+    ],
+    &quot;rationale&quot;: &quot;Session retention controls are a GDPR and privacy hygiene requirement. Raw PII mappings must not persist indefinitely. Maps to IF-VAULT as the purge operation acts on the vault data layer.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;PASS&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-006.html&quot;,
+      &quot;notes&quot;: &quot;Tested via direct DB manipulation and programmatic purge invocation&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SYS-007&quot;,
+    &quot;title&quot;: &quot;Anonymize and restore text via CLI&quot;,
+    &quot;description&quot;: &quot;The system shall execute anonymize or restore operations issued as CLI commands against a specified session and return results to stdout within 10 seconds.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-CLI&quot;,
+    &quot;test_method&quot;: &quot;Demonstration&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-007&quot;,
+      &quot;procedure&quot;: &quot;1. Run: pii-anonymizer anonymize --session test1 --text &#x27;Alice works at Acme Corp&#x27;. Record stdout. 2. Run: pii-anonymizer restore --session test1 --text &lt;anonymized output from step 1&gt;. Record stdout. 3. Measure elapsed time for each command.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 1 stdout contains anonymized text with PERSON and ORG placeholders and no original entity values. Step 2 stdout contains text identical to the original input. Both commands complete within 10 seconds.&quot;,
+      &quot;preconditions&quot;: &quot;pii-anonymizer CLI installed and on PATH. Service running locally or library mode available. No prior session &#x27;test1&#x27; exists.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-CTRL-001&quot;,
+      &quot;SUB-CTRL-003&quot;,
+      &quot;SUB-INT-001&quot;
+    ],
+    &quot;rationale&quot;: &quot;CLI is a first-class interface per the SPEC. Enables local testing, automation scripting, and use without an HTTP client. Maps to IF-CLI.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;PASS&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-007.html&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SYS-008&quot;,
+    &quot;title&quot;: &quot;Expose session inspection and reset via CLI&quot;,
+    &quot;description&quot;: &quot;The system shall allow a CLI operator to inspect all mappings for a session and to reset a session, with results returned to stdout.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-CLI&quot;,
+    &quot;test_method&quot;: &quot;Demonstration&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-008&quot;,
+      &quot;procedure&quot;: &quot;1. Create a session with at least two distinct entities via TC-SYS-007. 2. Run: pii-anonymizer show --session test1. Record stdout. 3. Run: pii-anonymizer reset --session test1. 4. Run: pii-anonymizer show --session test1 again.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 2 stdout lists at least two mappings with label, original, and placeholder columns. Step 4 stdout shows an empty mapping list or a &#x27;session not found&#x27; message.&quot;,
+      &quot;preconditions&quot;: &quot;Session &#x27;test1&#x27; populated via TC-SYS-007. CLI installed and on PATH.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-INT-001&quot;,
+      &quot;SUB-DAT-003&quot;
+    ],
+    &quot;rationale&quot;: &quot;Operators need visibility and control over session state for debugging and GDPR delete workflows. Maps to IF-CLI.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;PASS&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-008.html&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SYS-009&quot;,
+    &quot;title&quot;: &quot;Expose health status via admin endpoint&quot;,
+    &quot;description&quot;: &quot;The system shall respond to a health check request on GET /health from a loopback address with HTTP 200 and a machine-readable status payload within 2 seconds.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-ADMIN&quot;,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-009&quot;,
+      &quot;procedure&quot;: &quot;1. From 127.0.0.1, send HTTP GET to /health. Record response code, body, and elapsed time. 2. Attempt the same request from a non-loopback address (e.g. the VPS public IP). Record response.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 1: HTTP 200 returned with a JSON body containing at minimum a &#x27;status&#x27; field with value &#x27;ok&#x27;, within 2 seconds. Step 2: HTTP 403 or TCP connection refused.&quot;,
+      &quot;preconditions&quot;: &quot;System running. Loopback and external network access both available for the tester.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-CTRL-004&quot;,
+      &quot;SUB-SEC-004&quot;
+    ],
+    &quot;rationale&quot;: &quot;Health endpoint enables container orchestration readiness/liveness probes and operator monitoring. Loopback restriction prevents public exposure of system internals. Maps to IF-ADMIN.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;PASS&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-009.html&quot;,
+      &quot;notes&quot;: &quot;Loopback restriction verified with PII_ALLOW_REMOTE=0&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SYS-010&quot;,
+    &quot;title&quot;: &quot;Restrict admin session management to loopback&quot;,
+    &quot;description&quot;: &quot;The system shall process session inspection and deletion requests on /v1/sessions/* only when the request originates from the loopback address, and shall reject such requests from any other network address with HTTP 403.&quot;,
+    &quot;level&quot;: &quot;L1&quot;,
+    &quot;interface&quot;: &quot;IF-ADMIN&quot;,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SYS-010&quot;,
+      &quot;procedure&quot;: &quot;1. From 127.0.0.1, send HTTP GET to /v1/sessions/{sessionKey}/mappings for an existing session. Record response. 2. From a non-loopback address (e.g. via the public HTTPS endpoint), attempt the same request with a valid Bearer Token. Record response.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 1 returns HTTP 200 with mappings data. Step 2 returns HTTP 403 regardless of Bearer Token validity.&quot;,
+      &quot;preconditions&quot;: &quot;Session with known key exists. System running with loopback restriction enabled. Tester has access from both loopback and external network.&quot;
+    },
+    &quot;parent_ids&quot;: [],
+    &quot;child_ids&quot;: [
+      &quot;SUB-SEC-004&quot;,
+      &quot;SUB-SEC-001&quot;
+    ],
+    &quot;rationale&quot;: &quot;Admin endpoints expose raw PII mappings. Public exposure would constitute a data breach vector. Loopback restriction is the primary containment control. Maps to IF-ADMIN.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: [],
+    &quot;verification_result&quot;: {
+      &quot;status&quot;: &quot;PASS&quot;,
+      &quot;date&quot;: &quot;2026-02-23&quot;,
+      &quot;report_link&quot;: &quot;verification/TC-SYS-010.html&quot;,
+      &quot;notes&quot;: &quot;Loopback restriction verified with PII_ALLOW_REMOTE=0&quot;
+    }
+  },
+  {
+    &quot;id&quot;: &quot;SUB-CTRL-001&quot;,
+    &quot;title&quot;: &quot;Detect PERSON and ORG entities in input text&quot;,
+    &quot;description&quot;: &quot;The anonymization controller shall invoke the Presidio Analyzer engine on the input text and return a list of entity spans of type PERSON and ORGANIZATION, filtered to a minimum confidence score of 0.7 in balanced mode.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-CTRL-001&quot;,
+      &quot;procedure&quot;: &quot;1. Call the analyzer with the text &#x27;Alice Smith joined Google last Monday&#x27;. 2. Inspect the returned span list for entity_type, start, end, and score. 3. Repeat with text containing no entities. 4. Repeat with overlapping spans (e.g. &#x27;Apple Inc&#x27; where &#x27;Apple&#x27; and &#x27;Apple Inc&#x27; are both candidates).&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 2: spans include PERSON covering &#x27;Alice Smith&#x27; and ORGANIZATION covering &#x27;Google&#x27;, both with score &gt;= 0.7. Step 3: empty span list returned. Step 4: only the longer non-overlapping span is retained.&quot;,
+      &quot;preconditions&quot;: &quot;Presidio Analyzer initialized with English spaCy model. Balanced mode configured.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-001&quot;,
+      &quot;SYS-007&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-001 and SYS-007. The detection step is the first internal operation of the anonymize pipeline and must produce correct, de-overlapped spans before placeholder assignment can occur.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-CTRL-002&quot;,
+    &quot;title&quot;: &quot;Assign deterministic session-scoped placeholders&quot;,
+    &quot;description&quot;: &quot;The anonymization controller shall, for each detected entity span, compute a normalized key, look up or create a mapping record in the vault for the (sessionKey, label, normalizedKey) tuple, and assign the existing placeholder if found or allocate the next sequential placeholder for that label if not.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-CTRL-002&quot;,
+      &quot;procedure&quot;: &quot;1. Call anonymize with sessionKey=&#x27;s1&#x27; and text containing &#x27;Alice&#x27;. Record placeholder assigned. 2. Call anonymize again with sessionKey=&#x27;s1&#x27; and text containing &#x27;alice&#x27; (lowercase). Record placeholder. 3. Call anonymize with sessionKey=&#x27;s2&#x27; and text containing &#x27;Alice&#x27;. Record placeholder. 4. Call anonymize with sessionKey=&#x27;s1&#x27; and text containing a new name &#x27;Bob&#x27;. Record placeholder.&quot;,
+      &quot;pass_criterion&quot;: &quot;Steps 1 and 2 return the same placeholder (case-insensitive normalization). Step 3 may return the same or a different placeholder \u2014 the counter is per-session, so PERS_1 is valid for both sessions independently. Step 4 returns PERS_2 for session s1 (counter increments per label per session).&quot;,
+      &quot;preconditions&quot;: &quot;Empty vault. Two distinct sessionKeys available.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-001&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-001. Deterministic placeholder assignment is a core correctness invariant \u2014 same entity in same session must always map to the same placeholder, or restore will produce wrong output.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-CTRL-003&quot;,
+    &quot;title&quot;: &quot;Replace entity spans with placeholders in source text&quot;,
+    &quot;description&quot;: &quot;The anonymization controller shall replace all detected entity spans in the input text with their assigned placeholders, processing spans from rightmost to leftmost to preserve character offsets, and return the resulting anonymized string.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-CTRL-003&quot;,
+      &quot;procedure&quot;: &quot;1. Provide text &#x27;Alice works at Acme Corp and Alice is great&#x27; with known spans for both &#x27;Alice&#x27; occurrences and &#x27;Acme Corp&#x27;. 2. Inspect the anonymizedText output. 3. Verify character positions of surrounding text (e.g. &#x27;works at&#x27;, &#x27;and&#x27;, &#x27;is great&#x27;) are preserved.&quot;,
+      &quot;pass_criterion&quot;: &quot;Both &#x27;Alice&#x27; occurrences replaced by the same placeholder. &#x27;Acme Corp&#x27; replaced by its ORG placeholder. Surrounding non-entity text is byte-for-byte identical to the original. No entity substrings remain in anonymizedText.&quot;,
+      &quot;preconditions&quot;: &quot;SUB-CTRL-001 and SUB-CTRL-002 functioning. Known input text and expected spans available.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-002&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-002. Right-to-left replacement is required to avoid corrupting earlier span offsets when substituting text of different lengths. Correctness of surrounding text is essential for restore fidelity.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-CTRL-004&quot;,
+    &quot;title&quot;: &quot;Report service health including vault connectivity&quot;,
+    &quot;description&quot;: &quot;The health controller shall respond to a health check request by verifying SQLite vault connectivity and returning a JSON payload containing at minimum status, vault_ok, and uptime_seconds fields.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-CTRL-004&quot;,
+      &quot;procedure&quot;: &quot;1. Call GET /health with vault accessible. Inspect response body fields. 2. Make the vault file unreadable (e.g. chmod 000). Call GET /health again. Inspect response body and HTTP status code. 3. Restore vault permissions.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 1: HTTP 200, body contains status=&#x27;ok&#x27;, vault_ok=true, uptime_seconds &gt; 0. Step 2: HTTP 200 or 503, body contains vault_ok=false and status != &#x27;ok&#x27;.&quot;,
+      &quot;preconditions&quot;: &quot;System running. Filesystem permission manipulation possible from test environment.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-009&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-009. A health check that does not verify the vault gives false confidence \u2014 if the vault is inaccessible, anonymize and restore will fail silently or with errors.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-DAT-001&quot;,
+    &quot;title&quot;: &quot;Persist mapping records atomically to SQLite vault&quot;,
+    &quot;description&quot;: &quot;The data layer shall write each new (sessionKey, label, normalizedKey, original, placeholder) mapping to the SQLite vault within the same transaction as the session update, such that no mapping is visible without its parent session record.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-DAT-001&quot;,
+      &quot;procedure&quot;: &quot;1. Call anonymize with a new sessionKey. 2. Immediately query the SQLite file directly: SELECT * FROM mappings WHERE session_key=? and SELECT * FROM sessions WHERE session_key=?. 3. Simulate a write failure mid-transaction (e.g. by injecting a fault before COMMIT). 4. Re-query both tables.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 2: both session and mapping rows present and consistent. Step 4: neither partial session nor orphan mapping rows present \u2014 the transaction rolled back completely.&quot;,
+      &quot;preconditions&quot;: &quot;Direct SQLite file access available. Fault injection mechanism available (test double or SQLite hook).&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-001&quot;,
+      &quot;SYS-005&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-001 and SYS-005. Atomic writes prevent orphan mappings (mappings without a session) and partial session records, both of which would corrupt restore operations after a restart.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-DAT-002&quot;,
+    &quot;title&quot;: &quot;Initialise SQLite schema on first startup&quot;,
+    &quot;description&quot;: &quot;The data layer shall create the sessions and mappings tables, all required indexes, and the schema version record on first startup if they do not already exist, without data loss on subsequent startups.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-DAT-002&quot;,
+      &quot;procedure&quot;: &quot;1. Start the service against an empty SQLite file. Inspect the file schema using .schema in sqlite3. 2. Stop and restart the service against the same file containing existing data. Verify existing rows are intact. 3. Inspect schema version record.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 1: sessions table, mappings table, and all indexes defined in SPEC data model are present. Step 2: all rows present and unchanged. Step 3: schema version record exists with expected version value.&quot;,
+      &quot;preconditions&quot;: &quot;Empty SQLite file at configured vault path. Existing-data file with known rows for step 2.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-005&quot;,
+      &quot;SYS-006&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-005. Schema initialisation is a prerequisite for all vault operations. Idempotent init (no data loss on restart) is required to satisfy the persistence requirement.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-DAT-003&quot;,
+    &quot;title&quot;: &quot;Purge expired sessions and cascade-delete their mappings&quot;,
+    &quot;description&quot;: &quot;The data layer purge job shall, on each scheduled interval, delete all session rows where expires_at is less than the current epoch time, and rely on ON DELETE CASCADE to remove all associated mapping rows in the same operation.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-DAT-003&quot;,
+      &quot;procedure&quot;: &quot;1. Insert a session row with expires_at set to (now - 10 seconds) directly into SQLite. Insert two mapping rows for that session. 2. Trigger the purge job (either wait for interval or invoke directly in test). 3. Query sessions and mappings tables for the expired session_key.&quot;,
+      &quot;pass_criterion&quot;: &quot;Session row absent from sessions table. Both mapping rows absent from mappings table. No orphan mapping rows with the expired session_key remain.&quot;,
+      &quot;preconditions&quot;: &quot;Direct SQLite write access. Purge job invocable in isolation (testable unit). ON DELETE CASCADE confirmed in schema.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-006&quot;,
+      &quot;SYS-008&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-006 and SYS-008. Cascade delete ensures referential integrity \u2014 mapping rows must not survive their parent session. This is also the mechanism behind explicit reset (SYS-008/CLI reset command).&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-SEC-001&quot;,
+    &quot;title&quot;: &quot;Validate Bearer Token on all /v1/* requests&quot;,
+    &quot;description&quot;: &quot;The security middleware shall extract the Authorization header from every inbound request to /v1/*, compare the token value against the configured secret using a constant-time comparison, and reject the request with HTTP 401 before any business logic executes if the token is absent, malformed, or does not match.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-SEC-001&quot;,
+      &quot;procedure&quot;: &quot;1. Send POST /v1/anonymize with no Authorization header. 2. Send with header &#x27;Authorization: Bearer wrong_token&#x27;. 3. Send with header &#x27;Authorization: Bearer correct_token&#x27;. 4. Measure time difference between rejection (steps 1-2) and acceptance (step 3) to check for timing oracle.&quot;,
+      &quot;pass_criterion&quot;: &quot;Steps 1 and 2: HTTP 401, no session created, no PII processed. Step 3: HTTP 200. Step 4: timing difference between wrong and correct token responses is less than 10ms (constant-time comparison).&quot;,
+      &quot;preconditions&quot;: &quot;Service configured with a known Bearer Token value. Timing measurement tool available (e.g. curl -w &#x27;%{time_total}&#x27;).&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-001&quot;,
+      &quot;SYS-002&quot;,
+      &quot;SYS-003&quot;,
+      &quot;SYS-010&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-001, SYS-002, SYS-003. Constant-time comparison prevents timing attacks that could allow an attacker to brute-force the token character by character. Middleware placement before business logic ensures no PII is processed on unauthenticated requests.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-SEC-002&quot;,
+    &quot;title&quot;: &quot;Enforce request payload size limit&quot;,
+    &quot;description&quot;: &quot;The security middleware shall reject any request to /v1/* whose body exceeds the configured maximum payload size with HTTP 413, without loading the full body into memory.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-SEC-002&quot;,
+      &quot;procedure&quot;: &quot;1. Configure max payload size to 1MB. Send a POST /v1/anonymize with a valid token and a body of 1MB + 1 byte. Record response. 2. Send a request with a body of exactly 1MB. Record response. 3. Monitor process memory during step 1 to confirm body was not fully buffered.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 1: HTTP 413 returned before full body is read. Step 2: HTTP 200 (or processing error unrelated to size). Step 3: memory increase during step 1 is less than 1MB above baseline.&quot;,
+      &quot;preconditions&quot;: &quot;Service running with configurable payload limit. Memory monitoring tool available.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-003&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-003. Unbounded payload acceptance enables denial-of-service via memory exhaustion. Streaming rejection (without full body read) is required to prevent memory-based DoS.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-SEC-003&quot;,
+    &quot;title&quot;: &quot;Configure Caddy to terminate TLS and enforce minimum protocol version&quot;,
+    &quot;description&quot;: &quot;The Caddy reverse proxy configuration shall bind exclusively to port 443 for HTTPS traffic, redirect port 80 to HTTPS, and set the minimum TLS protocol version to TLS 1.2.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Inspection&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-SEC-003&quot;,
+      &quot;procedure&quot;: &quot;1. Inspect the Caddyfile or Caddy JSON config for tls_min_version, port bindings, and HTTP-to-HTTPS redirect directives. 2. Run: openssl s_client -connect &lt;hostname&gt;:443 -tls1_1 and record output. 3. Run: openssl s_client -connect &lt;hostname&gt;:443 -tls1_2 and record output.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 1: config contains tls_min_version of 1.2 or equivalent, port 80 redirect directive present. Step 2: handshake fails with protocol error. Step 3: handshake succeeds and certificate is valid.&quot;,
+      &quot;preconditions&quot;: &quot;Caddy deployed and running. openssl available on the test machine. Public hostname resolves.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-004&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-004. TLS configuration is a Caddy-level responsibility inside the SOI. TLS 1.0/1.1 are deprecated and vulnerable to known attacks (BEAST, POODLE); minimum 1.2 is the current baseline.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-SEC-004&quot;,
+    &quot;title&quot;: &quot;Bind admin and health endpoints to loopback interface only&quot;,
+    &quot;description&quot;: &quot;The FastAPI application shall bind the /health and /v1/sessions/* route handlers to accept connections only from 127.0.0.1, and shall return HTTP 403 for any request on those routes arriving from any other source address.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-SEC-004&quot;,
+      &quot;procedure&quot;: &quot;1. From inside the Docker container, send GET /health to 127.0.0.1:8087. Record response. 2. From outside the container (via VPS public IP or via Caddy), attempt GET /health. Record response. 3. Confirm Caddy config does not proxy /health or /v1/sessions/* to the upstream.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 1: HTTP 200. Step 2: HTTP 403 or connection refused at network level. Step 3: Caddy reverse proxy rule for /health and /v1/sessions/* is absent or explicitly blocked.&quot;,
+      &quot;preconditions&quot;: &quot;System deployed in Docker. Network access from both inside and outside the container available. Caddy config inspectable.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-009&quot;,
+      &quot;SYS-010&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-009 and SYS-010. Admin routes expose raw PII mappings. The enforcement must happen at the application layer (FastAPI), not just Caddy, so that even direct container access from the VPS host does not bypass the restriction.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-INT-001&quot;,
+    &quot;title&quot;: &quot;CLI commands invoke library functions directly without HTTP&quot;,
+    &quot;description&quot;: &quot;The CLI interface adapter shall invoke anonymize, restore, show, and reset operations by calling the pii_anonymizer Python library directly in-process, without making HTTP requests to the FastAPI service, unless explicitly configured for HTTP client mode.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-INT-001&quot;,
+      &quot;procedure&quot;: &quot;1. With the FastAPI service stopped, run pii-anonymizer anonymize --session t1 --text &#x27;Alice at Acme&#x27;. Record result and exit code. 2. Run pii-anonymizer restore --session t1 --text &lt;output from step 1&gt;. 3. Run pii-anonymizer show --session t1. 4. Run pii-anonymizer reset --session t1.&quot;,
+      &quot;pass_criterion&quot;: &quot;All four commands succeed (exit code 0) with correct output. No HTTP connection errors. FastAPI service was not running during any step.&quot;,
+      &quot;preconditions&quot;: &quot;pii-anonymizer package installed. FastAPI service confirmed stopped (no process on port 8087). SQLite vault accessible.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-007&quot;,
+      &quot;SYS-008&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-007 and SYS-008. Library mode is a first-class requirement per the SPEC \u2014 the CLI must be usable without a running server for local testing, scripting, and offline use.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  },
+  {
+    &quot;id&quot;: &quot;SUB-INT-002&quot;,
+    &quot;title&quot;: &quot;CLI --json flag emits machine-readable output&quot;,
+    &quot;description&quot;: &quot;The CLI interface adapter shall, when the --json flag is present on any command, emit the full response payload as a valid JSON object to stdout and suppress all human-readable formatting.&quot;,
+    &quot;level&quot;: &quot;L2&quot;,
+    &quot;interface&quot;: null,
+    &quot;test_method&quot;: &quot;Test&quot;,
+    &quot;test_case&quot;: {
+      &quot;id&quot;: &quot;TC-SUB-INT-002&quot;,
+      &quot;procedure&quot;: &quot;1. Run: pii-anonymizer anonymize --session t1 --text &#x27;Alice at Acme&#x27; --json. Pipe stdout to python3 -m json.tool. 2. Run the same command without --json. Compare outputs.&quot;,
+      &quot;pass_criterion&quot;: &quot;Step 1: python3 -m json.tool parses output without error. JSON object contains anonymizedText and entities keys. Step 2: output is human-readable text, not raw JSON.&quot;,
+      &quot;preconditions&quot;: &quot;pii-anonymizer CLI installed. python3 available on PATH.&quot;
+    },
+    &quot;parent_ids&quot;: [
+      &quot;SYS-007&quot;
+    ],
+    &quot;child_ids&quot;: [],
+    &quot;rationale&quot;: &quot;Derived from SYS-007. Machine-readable output enables CLI use in automation pipelines and shell scripts. Separation from human-readable mode prevents parsing ambiguity.&quot;,
+    &quot;status&quot;: &quot;Draft&quot;,
+    &quot;flags&quot;: []
+  }
+]</pre></body></html>

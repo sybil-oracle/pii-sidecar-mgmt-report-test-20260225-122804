@@ -1,0 +1,41 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>TC-SYS-008</title><link rel="stylesheet" href="report-style.css"></head><body>
+<h1>TC-SYS-008 — Expose session inspection and reset via CLI</h1>
+<table>
+<tr><th>Requirement</th><td>SYS-008</td></tr>
+<tr><th>Test Date</th><td>2026-02-23T12:13Z</td></tr>
+<tr><th>Tester</th><td>Sybil Oracle (automated)</td></tr>
+</table>
+
+<h2>Procedure</h2>
+<ol>
+<li>Using session "cli-test1" from TC-SYS-007, run <code>show</code>.</li>
+<li>Run <code>reset</code>.</li>
+<li>Run <code>show</code> again.</li>
+</ol>
+
+<h2>Results</h2>
+<pre>Step 1 — Show:
+$ python -m cli.main show --session cli-test1
+
+LABEL      PLACEHOLDER    ORIGINAL
+--------------------------------------------------
+ORG        «ORG_1»        Acme Corp
+PERSON     «PERS_1»       Alice Smith
+
+Step 2 — Reset:
+$ python -m cli.main reset --session cli-test1
+Session 'cli-test1' deleted.
+
+Step 3 — Show after reset:
+$ python -m cli.main show --session cli-test1
+No mappings found for session 'cli-test1'.</pre>
+
+<h2>Analysis</h2>
+<ul>
+<li>✅ Show lists 2 mappings with label, placeholder, original columns</li>
+<li>✅ Reset deletes the session</li>
+<li>✅ Show after reset confirms empty/not-found</li>
+</ul>
+
+<div class="verdict pass">PASS</div>
+</body></html>

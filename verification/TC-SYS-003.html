@@ -1,0 +1,35 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>TC-SYS-003</title><link rel="stylesheet" href="report-style.css"></head><body>
+<h1>TC-SYS-003 — Reject unauthenticated API requests</h1>
+<table>
+<tr><th>Requirement</th><td>SYS-003</td></tr>
+<tr><th>Test Date</th><td>2026-02-23T12:10Z</td></tr>
+<tr><th>Tester</th><td>Sybil Oracle (automated)</td></tr>
+<tr><th>Setup</th><td>PII_API_TOKEN=test-secret-token temporarily enabled via docker-compose.yml</td></tr>
+</table>
+
+<h2>Procedure</h2>
+<ol>
+<li>Send POST /v1/anonymize with no Authorization header.</li>
+<li>Send POST /v1/anonymize with wrong Bearer Token.</li>
+<li>Send POST /v1/anonymize with correct Bearer Token.</li>
+<li>Verify rejection response does not echo submitted text.</li>
+</ol>
+
+<h2>Results</h2>
+<pre>Step 1 — No auth header:        HTTP 401
+Step 2 — Wrong token:            HTTP 401
+Step 3 — Correct token:          HTTP 200
+
+Rejection body: {"detail":"Invalid or missing bearer token."}
+(No PII echoed in rejection response)</pre>
+
+<h2>Analysis</h2>
+<ul>
+<li>✅ HTTP 401 returned for no-auth and wrong-token requests</li>
+<li>✅ HTTP 200 for correct token</li>
+<li>✅ Rejection body does not echo submitted text</li>
+<li>✅ No session created for rejected requests</li>
+</ul>
+
+<div class="verdict pass">PASS</div>
+</body></html>

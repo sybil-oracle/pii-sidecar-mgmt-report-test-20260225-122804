@@ -1,0 +1,36 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>TC-SYS-002</title><link rel="stylesheet" href="report-style.css"></head><body>
+<h1>TC-SYS-002 — Restore placeholders to originals via HTTPS</h1>
+<table>
+<tr><th>Requirement</th><td>SYS-002</td></tr>
+<tr><th>Test Date</th><td>2026-02-23T12:09Z</td></tr>
+<tr><th>Tester</th><td>Sybil Oracle (automated)</td></tr>
+</table>
+
+<h2>Procedure</h2>
+<ol>
+<li>Using session "test-sys-001" established in TC-SYS-001, POST /v1/restore with the anonymized text.</li>
+<li>Record HTTP response code, restoredText, restoredCount.</li>
+<li>Measure elapsed time.</li>
+</ol>
+
+<h2>Results</h2>
+<pre>$ curl -s -X POST http://127.0.0.1:8000/v1/restore \
+  -H "Content-Type: application/json" \
+  -d '{"session_key":"test-sys-001","text":"«PERS_2» works at «ORG_2» and «PERS_1» is from «ORG_1»"}'
+
+Response (HTTP 200):
+{"restored_text":"Alice Smith works at Acme Corp and Bob Jones is from Google Inc.",
+ "restored_count":4,"mapping_version":7}
+
+Elapsed: 0.004s</pre>
+
+<h2>Analysis</h2>
+<ul>
+<li>✅ HTTP 200 returned</li>
+<li>✅ restoredText identical to original text from TC-SYS-001</li>
+<li>✅ restoredCount = 4 (matches 4 placeholders in anonymized text)</li>
+<li>✅ Response in 0.004s (&lt; 5s)</li>
+</ul>
+
+<div class="verdict pass">PASS</div>
+</body></html>

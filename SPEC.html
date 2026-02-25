@@ -1,0 +1,242 @@
+<!doctype html><html><head><meta charset='utf-8'><title>SPEC.md</title>
+<style>body{font-family:Inter,Segoe UI,Arial,sans-serif;max-width:1000px;margin:24px auto;padding:0 16px;line-height:1.5}pre{white-space:pre-wrap;background:#f6f8fa;padding:16px;border-radius:8px}</style>
+</head><body><h1>SPEC.md</h1><pre># SPEC-1-Privacy-First PII Anonymization Sidecar
+
+## Background
+
+You want a **standalone, privacy-first anonymization sidecar** for LLM interactions. The sidecar detects entities locally, replaces them with placeholders, and can later restore originals—**without making any LLM calls itself**.
+
+The service must be:
+- **usable by itself** (CLI + local API)
+- **reusable in other LLM projects** (not OpenClaw-specific)
+- **prepared for minimal-effort OpenClaw integration later** once OpenClaw exposes (or you add via fork/PR) the necessary request/response lifecycle hooks.
+
+You also found related open-source work from KatherLab (LLMAIx / LLM Anonymizer) that does local extraction/anonymization and fuzzy matching for text redaction workflows. We can reuse ideas (policies, testing fixtures, evaluation approach) while keeping this service optimized for **chat-turn / pipeline middleware**.
+
+## Requirements
+
+### Must (P0)
+- **Standalone sidecar**: exposes an API and CLI; does **not** call or proxy any LLM.
+- **Local-only PII handling**: raw entities are processed locally; anonymization does not require outbound network calls.
+- **Anonymize + restore primitives**:
+  - `anonymize(text, sessionKey) -&gt; anonymizedText + mapping metadata`
+  - `restore(text, sessionKey) -&gt; restoredText`
+- **Entity support (v1)**: detect and replace **PERSON** and **ORG (company names)**.
+- **Deterministic placeholders per session** (same entity → same placeholder within a session).
+- **SQLite vault from day one** for persistence across restarts.
+- **Session retention controls**: configurable TTL + explicit delete/reset.
+- **Testable**: unit + integration tests; deterministic fixtures.
+
+### Should (P1)
+- CLI UX:
+  - `pii-anonymizer anonymize --session &lt;k&gt; --in &lt;file&gt;|--text &quot;...&quot;`
+  - `pii-anonymizer restore --session &lt;k&gt; --text &quot;...&quot;`
+  - `pii-anonymizer show --session &lt;k&gt;`
+  - `pii-anonymizer reset --session &lt;k&gt;`
+- Library mode: importable Python package used by other apps.
+- Streaming-friendly restore guidance (rolling-buffer approach) for downstream integrations.
+- Rules: allowlist/denylist, “don’t anonymize code blocks”, per-request overrides.
+- Operational safety: request size limits, timeouts, and an auth option for non-loopback deployment.
+
+### Could (P2)
+- Expand entities (EMAIL, PHONE, ADDRESS, etc.).
+- Opt-in cross-session reuse (&quot;vault scope&quot; modes).
+- Multi-language models and language auto-detect.
+- GDPR ops: export/delete, retention policy presets.
+
+### Won’t (P3) for v1
+- Full document/OCR pipeline like LLMAIx.
+- Guarantees against sophisticated re-identification.
+
+### Assumptions (locked-in)
+- Primary language: **English only** for v1.
+- Detection stack: **Microsoft Presidio** (Analyzer + Anonymizer).
+- Deployment: local machine / private network; API bound to loopback by default.
+
+## Method
+
+### High-level approach
+
+Build a **standalone service** that offers **PII detection + mapping** primitives:
+- `anonymize`: detect PERSON/ORG and replace with placeholders
+- `restore`: replace placeholders back to originals using a session-scoped mapping
+
+**Detection stack (v1): Microsoft Presidio**
+- Use `presidio-analyzer` for detection (recognizers + NLP engine)
+- Use `presidio-anonymizer` to apply replacement operators
+- Configure Presidio to use an English spaCy model under the hood (implementation detail) while keeping the public-facing story as “Presidio-based”.
+
+This service is OpenAI-independent and can be integrated into any LLM pipeline by placing calls:
+- **before** the model request (anonymize)
+- **after** the model response (restore)
+
+### Components
+
+1) **Standalone Sidecar Service: `pii-anonymizer` (Python)**
+- Exposes:
+  - **HTTP API** (FastAPI)
+  - **CLI** (Typer)
+  - **Python library** API (importable)
+- Responsibilities:
+  - Call Presidio analyzer to detect entities
+  - Generate stable placeholders and maintain mappings
+  - Apply anonymization operators and return mapping metadata
+  - Restore placeholders back to originals
+  - Persist mapping state to SQLite + cache in memory
+  - Admin endpoints for inspection/reset (loopback-only by default)
+
+2) **PII Detection Engine: Presidio Analyzer**
+- `AnalyzerEngine` runs recognizers per request.
+- NLP engine configured for English.
+- v1 entity focus:
+  - `PERSON`
+  - `ORGANIZATION` (mapped to internal `ORG` label)
+- Extension hooks:
+  - Custom recognizers (pattern, deny/allow lists)
+  - Threshold presets (strict/balanced/permissive)
+
+3) **Anonymization Engine: Presidio Anonymizer**
+- Uses replacement operators to substitute detected spans with placeholders.
+- Operators are placeholder-aware:
+  - PERSON → `«PERS_n»`
+  - ORG → `«ORG_n»`
+
+4) **Mapping Vault: SQLite + in-memory cache**
+- SQLite provides persistence across restarts.
+- In-memory cache accelerates repeated calls within a session.
+- Supports TTL/retention cleanup and explicit delete.
+
+### Sidecar API
+
+#### `POST /v1/anonymize`
+**Purpose:** replace PERSON/ORG with placeholders and return mapping metadata.
+
+Request:
+- `sessionKey`: string (required)
+- `text`: string (required)
+- `options` (optional):
+  - `labels`: default `[&quot;PERSON&quot;,&quot;ORG&quot;]`
+  - `skipCodeBlocks`: default `true`
+  - `mode`: `&quot;strict&quot;|&quot;balanced&quot;|&quot;permissive&quot;` (preset policies)
+  - `allowlist`: string[] (exact matches or regexes; v1 exact, v2 regex)
+  - `denylist`: string[]
+
+Response:
+- `anonymizedText`: string
+- `entities`: array of `{ label, original, placeholder, start, end }`
+- `mappingVersion`: string (opaque; increments per session update)
+
+#### `POST /v1/restore`
+**Purpose:** restore placeholders back to originals.
+
+Request:
+- `sessionKey`: string
+- `text`: string
+
+Response:
+- `restoredText`: string
+- `restoredCount`: number
+
+#### Admin (loopback-only by default)
+- `GET /health`
+- `GET /v1/sessions/:sessionKey/mappings?limit=200`
+- `DELETE /v1/sessions/:sessionKey` (GDPR delete / reset)
+- `DELETE /v1/sessions` (delete all; guarded)
+
+### CLI (v1)
+- `pii-anonymizer serve --host 127.0.0.1 --port 8087`
+- `pii-anonymizer anonymize --session &lt;k&gt; --text &quot;...&quot; [--json]`
+- `pii-anonymizer restore --session &lt;k&gt; --text &quot;...&quot; [--json]`
+- `pii-anonymizer show --session &lt;k&gt; [--limit 50]`
+- `pii-anonymizer reset --session &lt;k&gt;`
+
+### Session identity and mapping scope
+- `sessionKey` is provided by the caller (CLI user, app, or future OpenClaw hook/plugin).
+- Mapping is stored **per-session** in SQLite and cached in memory.
+- Retention:
+  - default: keep sessions for 7 days (configurable)
+  - periodic purge job deletes expired sessions
+- Privacy:
+  - SQLite DB stored locally (e.g., `~/.pii-anonymizer/vault.sqlite`)
+  - API binds to loopback by default; optional bearer token for non-loopback
+
+### Placeholder design
+Use tokens unlikely to appear naturally and that survive tokenization:
+- PERSON: `«PERS_1»`, `«PERS_2»`, …
+- ORG: `«ORG_1»`, `«ORG_2»`, …
+
+### Algorithms
+
+#### Entity detection + span-safe replacement
+1. Presidio returns entity spans (`start`, `end`, `entity_type`).
+2. Filter to PERSON/ORGANIZATION (mapped to ORG).
+3. De-overlap spans (prefer longer spans; then earlier start).
+4. For each entity:
+   - `normalizedKey = normalize(original)`
+   - lookup `(sessionKey, label, normalizedKey)` in vault; if absent allocate next placeholder for that label
+5. Replace from end → start using placeholders.
+6. Return `entities[]` including placeholder assignments.
+
+Normalization (v1): trim, collapse whitespace, preserve original for restore; normalizedKey is case-insensitive.
+
+#### Restoration
+- Exact placeholder replacement based on `(sessionKey, placeholder)`.
+- If unknown placeholders appear, leave them unchanged.
+
+#### Streaming restoration guidance (for downstream callers)
+- Maintain a rolling buffer (e.g., 64 chars) across streamed chunks.
+- Call `restore()` on the buffered text and emit only the new suffix.
+
+### Data model (SQLite vault)
+
+Tables (v1):
+
+- `sessions`
+  - `session_key TEXT PRIMARY KEY`
+  - `created_at INTEGER NOT NULL`
+  - `updated_at INTEGER NOT NULL`
+  - `expires_at INTEGER NULL`
+  - `mapping_version INTEGER NOT NULL DEFAULT 0`
+
+- `mappings`
+  - `id INTEGER PRIMARY KEY AUTOINCREMENT`
+  - `session_key TEXT NOT NULL REFERENCES sessions(session_key) ON DELETE CASCADE`
+  - `label TEXT NOT NULL`  -- PERSON | ORG
+  - `normalized_key TEXT NOT NULL`
+  - `original TEXT NOT NULL`
+  - `placeholder TEXT NOT NULL`
+  - `created_at INTEGER NOT NULL`
+  - `last_used_at INTEGER NOT NULL`
+  - `UNIQUE(session_key, label, normalized_key)`
+  - `UNIQUE(session_key, placeholder)`
+
+Indexes:
+- `idx_mappings_session_last_used(session_key, last_used_at)`
+- `idx_mappings_session_placeholder(session_key, placeholder)`
+
+### PlantUML
+
+```plantuml
+@startuml
+skinparam componentStyle rectangle
+
+actor &quot;Caller&quot; as C
+component &quot;PII Sidecar FastAPI - CLI &amp; API access&quot; as SC
+component &quot;Presidio Analyzer&quot; as PA
+component &quot;Presidio Anonymizer&quot; as PN
+database &quot;SQLite Vault&quot; as DB
+component &quot;In-memory Cache&quot; as CACHE
+
+C --&gt; SC : /v1/anonymize(sessionKey, text)
+SC --&gt; PA : detect PERSON/ORG
+SC --&gt; DB : getOrCreate mappings
+SC --&gt; CACHE : hot cache (optional)
+SC --&gt; PN : apply placeholders
+SC --&gt; C : anonymizedText + entities
+
+C --&gt; SC : /v1/restore(sessionKey, text)
+SC --&gt; DB : placeholder -&gt; original
+SC --&gt; CACHE : hot cache (optional)
+SC --&gt; C : restoredText
+@enduml
+```</pre></body></html>

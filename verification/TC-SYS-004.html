@@ -1,0 +1,29 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>TC-SYS-004</title><link rel="stylesheet" href="report-style.css"></head><body>
+<h1>TC-SYS-004 — Enforce HTTPS-only transport for all API traffic</h1>
+<table>
+<tr><th>Requirement</th><td>SYS-004</td></tr>
+<tr><th>Test Date</th><td>2026-02-23T12:10Z</td></tr>
+<tr><th>Tester</th><td>Sybil Oracle (automated)</td></tr>
+</table>
+
+<h2>Procedure</h2>
+<p>Attempted to verify TLS configuration on the deployment.</p>
+
+<h2>Results</h2>
+<pre>Current deployment status:
+- No domain name configured
+- Caddy serves on port 80 (HTTP) only
+- No TLS certificate installed
+- Port 443 not listening
+
+This test cannot be executed in the current deployment configuration.</pre>
+
+<h2>Analysis</h2>
+<ul>
+<li>❌ No HTTPS configured — Caddy serves plaintext HTTP on port 80</li>
+<li>❌ No TLS certificate (no domain provisioned)</li>
+<li>This is a deployment configuration gap, not a software defect. The application supports HTTPS when Caddy is properly configured with a domain and certificate.</li>
+</ul>
+
+<div class="verdict blocked">BLOCKED — No HTTPS/TLS configured in current deployment (no domain)</div>
+</body></html>

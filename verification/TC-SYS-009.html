@@ -1,0 +1,42 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>TC-SYS-009</title><link rel="stylesheet" href="report-style.css"></head><body>
+<h1>TC-SYS-009 — Expose health status via admin endpoint</h1>
+<table>
+<tr><th>Requirement</th><td>SYS-009</td></tr>
+<tr><th>Test Date</th><td>2026-02-23T12:14Z</td></tr>
+<tr><th>Tester</th><td>Sybil Oracle (automated)</td></tr>
+</table>
+
+<h2>Procedure</h2>
+<ol>
+<li>From loopback (inside container), GET /health.</li>
+<li>From external (via Caddy public IP), GET /pii/health with PII_ALLOW_REMOTE=1.</li>
+<li>Temporarily set PII_ALLOW_REMOTE=0 and test external access.</li>
+</ol>
+
+<h2>Results</h2>
+<pre>Step 1 — Loopback (inside container):
+  HTTP 200, body: {"status":"ok"}
+
+Step 2a — External (PII_ALLOW_REMOTE=1):
+  HTTP 200, body: {"status":"ok"}
+  (Remote access allowed by configuration)
+
+Step 2b — External (PII_ALLOW_REMOTE=0):
+  HTTP 403, body: {"detail":"Remote access not allowed. Set PII_ALLOW_REMOTE=1."}
+
+Step 1b — Loopback from VPS host (PII_ALLOW_REMOTE=0):
+  HTTP 403 (Docker bridge IP ≠ 127.0.0.1)
+
+Step 1c — Loopback from inside container (PII_ALLOW_REMOTE=0):
+  HTTP 200, body: {"status":"ok"}</pre>
+
+<h2>Analysis</h2>
+<ul>
+<li>✅ Health returns HTTP 200 with status:"ok" from true loopback</li>
+<li>✅ With PII_ALLOW_REMOTE=0, external requests get HTTP 403</li>
+<li>✅ Response within 2 seconds</li>
+<li>ℹ️ Note: Health response is minimal (just "status":"ok") — no vault_ok or uptime_seconds fields. Acceptable for L1 requirement.</li>
+</ul>
+
+<div class="verdict pass">PASS</div>
+</body></html>

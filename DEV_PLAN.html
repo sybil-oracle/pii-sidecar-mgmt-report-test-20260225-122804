@@ -1,0 +1,117 @@
+<!doctype html><html><head><meta charset='utf-8'><title>DEV_PLAN.md</title>
+<style>body{font-family:Inter,Segoe UI,Arial,sans-serif;max-width:1000px;margin:24px auto;padding:0 16px;line-height:1.5}pre{white-space:pre-wrap;background:#f6f8fa;padding:16px;border-radius:8px}</style>
+</head><body><h1>DEV_PLAN.md</h1><pre>## Implementation
+
+### Step-by-step development plan (standalone sidecar first)
+
+#### Phase 0 - Repo scaffolding + contracts ✅
+- Repo structure:
+  - `pii_anonymizer/` (library)
+  - `service/` (FastAPI app)
+  - `cli/` (Typer entrypoint)
+  - `docs/` (API + examples)
+- Lock:
+  - placeholder conventions
+  - API schema
+  - SQLite schema + migration approach (Alembic optional; for v1 a single init migration is fine)
+- CI:
+  - ruff/black, mypy
+  - pytest
+  - docker build
+
+**Deliverable:** skeleton service + CLI stub + CI green.
+
+#### Phase 1 - SQLite vault + mapping engine ✅
+- Implement SQLite access layer + migrations.
+- Implement deterministic placeholder allocation:
+  - atomic &quot;get-or-create&quot; for mapping rows
+  - maintain per-session counters (derived from existing rows or stored in session metadata)
+- Implement retention purge job (interval-based).
+
+**Deliverable:** vault-backed mapping with unit tests.
+
+#### Phase 2 - Presidio integration ✅
+- Wire `AnalyzerEngine` to return PERSON and ORGANIZATION.
+- Add policy presets:
+  - strict/balanced/permissive (span length rules, allow/deny)
+- Add &quot;skip code blocks&quot; preprocessing.
+
+**Deliverable:** integration tests on sample prompts; stable outputs.
+
+**Carry-forward:**
+- Lazy Presidio/spaCy init for Phase 4 (avoid blocking FastAPI event loop on startup)
+- Optional: comparative policy test (same ambiguous text across all three presets)
+
+#### Phase 3 - Anonymize/restore pipeline ✅
+- Span-safe replacement using placeholders.
+- Restore using exact placeholder mapping.
+- Include `mappingVersion` updates and optimistic safety.
+
+**Deliverable:** end-to-end anonymize→restore correctness tests.
+
+**Carry-forward:**
+- ~~Optional `expected_version` param on `restore()` for optimistic safety~~ ✅ Implemented (`expected_mapping_version` + `MappingVersionMismatch` exception)
+
+#### Phase 4 - FastAPI service ✅
+- Implement endpoints + OpenAPI docs.
+- Add operational controls:
+  - request size limits
+  - timeouts
+  - optional bearer token
+  - loopback-only default
+
+**Deliverable:** curl-able service.
+
+**Carry-forward:**
+- P4-R12: Add guard on `DELETE /v1/sessions` (e.g. `X-Confirm-Delete` header or `?confirm=true` param)
+
+#### Phase 5 - CLI ✅
+- Commands:
+  - `serve`, `anonymize`, `restore`, `show`, `reset`
+- Modes:
+  - local (library)
+  - http client (API)
+
+**Deliverable:** CLI usable for local testing and automation.
+
+#### Phase 6 — Packaging + deployment ✅
+- Dockerfile + docker-compose example.
+- Versioned releases.
+- Docs with &quot;quick start&quot; + security notes.
+- **README.md overhaul:** replace boilerplate with proper project description, setup/install instructions, usage examples, and architecture overview.
+
+**Deliverable:** one-command local deploy.
+
+#### Phase 7 - Integration preparedness (no OpenClaw work yet) ✅ ✅
+- Provide an adapter guide:
+  - sessionKey recommendations
+  - streaming rolling-buffer restore
+  - failure modes: fail-open vs fail-closed
+- Provide sample adapters:
+  - Node middleware example
+  - Python pipeline example
+
+**Deliverable:** drop-in guidance for future OpenClaw hook/plugin and other stacks.
+
+## Milestones
+
+1) **M1:** SQLite vault + mapping engine + unit tests
+2) **M2:** Presidio PERSON/ORG detection integrated + integration tests
+3) **M3:** FastAPI endpoints + admin controls + auth option
+4) **M4:** CLI (local + HTTP client mode)
+5) **M5:** Docker packaging + release pipeline + docs
+6) **M6:** Integration guide + sample adapters
+
+## Gathering Results
+
+- Validate anonymization correctness:
+  - PERSON/ORG replaced as expected
+  - placeholders deterministic per session
+  - restore returns original text exactly
+- Validate persistence:
+  - restart service and confirm mappings persist
+- Measure overhead:
+  - latency per request
+  - database growth over time with retention enabled
+- Privacy checks:
+  - confirm logs don&#x27;t contain raw PII unless explicitly enabled</pre></body></html>
