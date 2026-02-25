@@ -60,26 +60,26 @@
     </section>
 
     <section class="card">
-      <h2>Delivery timeline (human-friendly view)</h2>
-      <p class="muted">Condensed by milestones first, then optional commit-level details.</p>
+      <h2>Implementation timeline (management view)</h2>
+      <p class="muted">Key milestones first, then optional commit-level detail.</p>
 
       <div class="grid">
-        <div class="card"><div class="muted">Kickoff</div><div><b>2026-02-18</b><br/>Repo + skeleton + contracts created</div></div>
-        <div class="card"><div class="muted">Core Build</div><div><b>2026-02-19 → 2026-02-21</b><br/>Phases 0–7 implemented and reviewed PASS</div></div>
-        <div class="card"><div class="muted">Systems Engineering</div><div><b>2026-02-23</b><br/>L1/L2 requirements + verification reports added</div></div>
-        <div class="card"><div class="muted">Artifact Restructure</div><div><b>2026-02-25</b><br/>Moved into structured systems engineering folders</div></div>
+        <div class="card" style="border-left:6px solid #6aa9ff;background:#122447"><div class="muted">Kickoff</div><div><b>2026-02-18</b><br/>Repo, baseline architecture, and delivery plan established.</div></div>
+        <div class="card" style="border-left:6px solid #38d996;background:#0f2b25"><div class="muted">Core Build</div><div><b>2026-02-19 → 2026-02-21</b><br/>Phases 0–7 implemented and formally reviewed as PASS.</div></div>
+        <div class="card" style="border-left:6px solid #f6c453;background:#2e250f"><div class="muted">Systems Engineering</div><div><b>2026-02-23</b><br/>Requirements set and test evidence package added.</div></div>
+        <div class="card" style="border-left:6px solid #c084fc;background:#241738"><div class="muted">Documentation Restructure</div><div><b>2026-02-25</b><br/>Artifacts reorganized into final folder structure.</div></div>
       </div>
 
       <h3 style="margin-top:12px">Milestone sequence</h3>
       <ol>
-        <li><b>Project start (Feb 18):</b> initial commit, project structure, dependencies, and SPEC/DEV_PLAN baseline.</li>
-        <li><b>Execution sprint (Feb 19–21):</b> all phases (0–7) delivered with formal review commits marked PASS.</li>
-        <li><b>Verification packaging (Feb 23):</b> system requirements + linked TC-SYS HTML test evidence committed.</li>
-        <li><b>Documentation cleanup (Feb 25):</b> artifacts reorganized under <code>systems engineering/</code>.</li>
+        <li><b>Project launch:</b> setup, technical framing, and plan approval.</li>
+        <li><b>Execution sprint:</b> all product phases completed end-to-end.</li>
+        <li><b>Verification packaging:</b> requirements and evidence linked for audits.</li>
+        <li><b>Reporting cleanup:</b> stakeholder artifacts consolidated.</li>
       </ol>
 
       <details>
-        <summary><b>Show commit-level timeline</b> (for deep dive)</summary>
+        <summary><b>Show commit-level timeline</b></summary>
         <ol>
           <li><b>2026-02-18</b> — Initial commit + scaffold + SPEC/DEV_PLAN</li>
           <li><b>2026-02-19</b> — Phase 0, 1, 2 implementation + reviews</li>
@@ -89,7 +89,7 @@
           <li><b>2026-02-25</b> — Artifacts reorganized into target folder structure</li>
         </ol>
       </details>
-      <p class="muted">Deep dive: <a href="DEV_PLAN.html">DEV_PLAN</a>, <a href="requirements.html">Requirements JSON</a>, and <a href="verification/">verification reports</a>.</p>
+      <p class="muted">Deep dive: <a href="DEV_PLAN.html">DEV_PLAN</a>, <a href="requirements.html">Requirements dashboard</a>, <a href="quality_report.html">Quality report</a>, <a href="traceability_graph.html">Traceability graph</a>, and <a href="verification/">verification reports</a>.</p>
     </section>
 
     <section class="card">
@@ -129,9 +129,9 @@
     <section class="card">
       <h2>Recommended management next moves</h2>
       <ol>
-        <li><b>Close SYS-004:</b> provision domain + TLS in Caddy, rerun TC-SYS-004, update verification status.</li>
-        <li><b>Performance hardening:</b> reduce anonymize cold-start latency (SYS-001 note) by pre-warming analyzer or tuning startup path.</li>
-        <li><b>Publish baseline:</b> tag release and circulate this report + test evidence as project completion pack.</li>
+        <li><b>Close the last open risk:</b> complete the HTTPS/TLS setup and mark that requirement as verified.</li>
+        <li><b>Improve first-user experience:</b> reduce cold-start delay so response times are consistently fast from the first request.</li>
+        <li><b>Publish a stakeholder release pack:</b> share this dashboard plus quality and traceability reports as the official project snapshot.</li>
       </ol>
     </section>
   </div>
