@@ -60,9 +60,36 @@
     </section>
 
     <section class="card">
-      <h2>Delivery timeline (what happened when)</h2>
-      <ol><li><b>2026-02-18</b> — Initial commit</li><li><b>2026-02-19</b> — Implement Phase 0: project scaffold and core library skeleton</li><li><b>2026-02-19</b> — Phase 0 review: PASS — feedback + DEV_PLAN updates</li><li><b>2026-02-19</b> — Implement Phase 1: async SQLite Vault with full test coverage</li><li><b>2026-02-19</b> — Phase 1 review: PASS with carry-forward items</li><li><b>2026-02-19</b> — Address Phase 1 review: normalize helper, API cleanup, concurrency tests</li><li><b>2026-02-19</b> — Phase 1 review updated: all P0 requirements PASS</li><li><b>2026-02-19</b> — Implement Phase 2: Presidio-backed AnonymizerEngine</li><li><b>2026-02-19</b> — Phase 2 review: PASS — all 14 requirements verified</li><li><b>2026-02-19</b> — DEV_PLAN: mark Phases 0-2 complete, add Phase 2 carry-forwards</li><li><b>2026-02-20</b> — Phase 3 review: PASS — anonymize/restore pipeline verified</li><li><b>2026-02-20</b> — DEV_PLAN: mark Phase 3 complete, add carry-forwards</li><li><b>2026-02-20</b> — Phase 2 carry-forward: MappingVersionMismatch + RestoreResponse versioning</li><li><b>2026-02-20</b> — Phase 3 review: re-verified after full push — PASS all 14 requirements</li><li><b>2026-02-20</b> — DEV_PLAN: update Phase 3 carry-forwards — optimistic safety now implemented</li><li><b>2026-02-21</b> — Phase 4: FastAPI service — endpoints, auth, middleware, lazy engine init</li><li><b>2026-02-21</b> — Phase 4 review: PASS (18/19) — one P1 carry-forward (delete-all guard)</li><li><b>2026-02-21</b> — Phase 5: CLI — local library + HTTP client modes</li><li><b>2026-02-21</b> — Phase 5 review: PASS (15/15) — all requirements met, P4-R12 carry-forward resolved</li><li><b>2026-02-21</b> — Phase 6: packaging, deployment, docs</li><li><b>2026-02-21</b> — Phase 6 review: PASS (10/10) — packaging, deployment, docs all verified</li><li><b>2026-02-21</b> — Phase 7: integration guide + Node middleware + Python pipeline examples</li><li><b>2026-02-21</b> — Phase 7 review: PASS (8/8) — all phases complete 🎉</li><li><b>2026-02-21</b> — Add Phase 5-7 implementation audit log</li><li><b>2026-02-23</b> — Add systems engineering artefacts: system context, system (L1 &amp; L2) requirements</li><li><b>2026-02-23</b> — Add system requirements verification results and HTML test reports</li><li><b>2026-02-25</b> — Reorganise artefacts into systems engineering/ folder structure</li></ol>
-      <p class="muted">Deep dive: <a href="DEV_PLAN.html">DEV_PLAN.md</a> and <code>git log</code>.</p>
+      <h2>Delivery timeline (human-friendly view)</h2>
+      <p class="muted">Condensed by milestones first, then optional commit-level details.</p>
+
+      <div class="grid">
+        <div class="card"><div class="muted">Kickoff</div><div><b>2026-02-18</b><br/>Repo + skeleton + contracts created</div></div>
+        <div class="card"><div class="muted">Core Build</div><div><b>2026-02-19 → 2026-02-21</b><br/>Phases 0–7 implemented and reviewed PASS</div></div>
+        <div class="card"><div class="muted">Systems Engineering</div><div><b>2026-02-23</b><br/>L1/L2 requirements + verification reports added</div></div>
+        <div class="card"><div class="muted">Artifact Restructure</div><div><b>2026-02-25</b><br/>Moved into structured systems engineering folders</div></div>
+      </div>
+
+      <h3 style="margin-top:12px">Milestone sequence</h3>
+      <ol>
+        <li><b>Project start (Feb 18):</b> initial commit, project structure, dependencies, and SPEC/DEV_PLAN baseline.</li>
+        <li><b>Execution sprint (Feb 19–21):</b> all phases (0–7) delivered with formal review commits marked PASS.</li>
+        <li><b>Verification packaging (Feb 23):</b> system requirements + linked TC-SYS HTML test evidence committed.</li>
+        <li><b>Documentation cleanup (Feb 25):</b> artifacts reorganized under <code>systems engineering/</code>.</li>
+      </ol>
+
+      <details>
+        <summary><b>Show commit-level timeline</b> (for deep dive)</summary>
+        <ol>
+          <li><b>2026-02-18</b> — Initial commit + scaffold + SPEC/DEV_PLAN</li>
+          <li><b>2026-02-19</b> — Phase 0, 1, 2 implementation + reviews</li>
+          <li><b>2026-02-20</b> — Phase 3 complete + carry-forwards handled</li>
+          <li><b>2026-02-21</b> — Phases 4, 5, 6, 7 complete + reviews PASS</li>
+          <li><b>2026-02-23</b> — System requirements and verification reports added</li>
+          <li><b>2026-02-25</b> — Artifacts reorganized into target folder structure</li>
+        </ol>
+      </details>
+      <p class="muted">Deep dive: <a href="DEV_PLAN.html">DEV_PLAN</a>, <a href="requirements.html">Requirements JSON</a>, and <a href="verification/">verification reports</a>.</p>
     </section>
 
     <section class="card">
