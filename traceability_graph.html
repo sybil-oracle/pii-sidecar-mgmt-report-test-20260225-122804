@@ -1,286 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Traceability Graph — PII Anonymizer</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<meta charset="UTF-8">
+<title>Traceability Graph</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, sans-serif; background: #1a1b2e; color: #e9ecef; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-  .topbar { background: #212529; border-bottom: 1px solid #343a40; padding: .8rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; flex-shrink: 0; }
-  .topbar h1 { font-size: 1rem; font-weight: 600; color: white; }
-  .topbar p { font-size: .8rem; color: #adb5bd; }
-  .badge { padding: 2px 10px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
-  .badge.l1 { background: #0d6efd; color: white; }
-  .badge.l2 { background: #6c757d; color: white; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #0f1724; color: #cdd6f4; }
+  .topbar { background: #1a2332; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a3a52; flex-shrink: 0; }
+  .topbar h1 { margin: 0; font-size: 16px; color: #cdd6f4; font-weight: 600; }
+  .topbar .meta { font-size: 12px; color: #6b7a99; }
   .layout { display: flex; flex: 1; overflow: hidden; }
-  #sidebar { width: 280px; background: #212529; border-right: 1px solid #343a40; overflow-y: auto; flex-shrink: 0; padding: 1rem; }
-  #sidebar h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; color: #adb5bd; margin-bottom: .6rem; margin-top: 1rem; }
-  #sidebar h3:first-child { margin-top: 0; }
-  .sidebar-item { background: #2c2f3a; border-radius: 5px; padding: .5rem .8rem; margin-bottom: .4rem; font-size: .8rem; cursor: pointer; border: 1px solid transparent; transition: all .15s; }
-  .sidebar-item:hover { border-color: #0d6efd; background: #1e2a40; }
-  .sidebar-item .sid { color: #74c0fc; font-weight: 600; font-size: .75rem; }
-  .sidebar-item .stitle { color: #ced4da; margin-top: 2px; }
-  .sidebar-item.orphan { border-color: #dc3545; }
-  .iface-tag { background: #2c3e50; border: 1px solid #4a5568; border-radius: 4px; padding: 2px 8px; font-size: .72rem; color: #90cdf4; margin-bottom: .3rem; display: block; cursor: pointer; }
-  .iface-tag:hover { background: #1e3a5f; }
-  #canvas { flex: 1; position: relative; overflow: hidden; }
-  svg { width: 100%; height: 100%; }
-  .node circle { stroke-width: 2; cursor: pointer; transition: r .2s; }
-  .node text { pointer-events: none; font-size: 10px; fill: #ced4da; }
-  .link { stroke-opacity: .5; }
-  #tooltip { position: absolute; background: #212529; border: 1px solid #495057; border-radius: 6px; padding: .8rem 1rem; max-width: 320px; font-size: .8rem; pointer-events: none; display: none; z-index: 100; line-height: 1.6; }
-  #tooltip .t-id { color: #74c0fc; font-weight: 700; font-size: .85rem; }
-  #tooltip .t-label { color: #adb5bd; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
-  #tooltip .t-iface { color: #63e6be; font-size: .78rem; margin-top: .3rem; }
-  #tooltip .t-desc { color: #e9ecef; margin-top: .4rem; font-size: .78rem; }
-  .legend { position: absolute; bottom: 1rem; right: 1rem; background: rgba(33,37,41,.9); border: 1px solid #343a40; border-radius: 6px; padding: .8rem 1rem; font-size: .75rem; }
-  .legend-item { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
-  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .controls { position: absolute; top: 1rem; right: 1rem; display: flex; gap: .5rem; }
-  .btn { background: #343a40; border: 1px solid #495057; color: #e9ecef; padding: .4rem .8rem; border-radius: 5px; cursor: pointer; font-size: .8rem; }
-  .btn:hover { background: #495057; }
-  #detail-panel { position: absolute; top: 1rem; left: 1rem; width: 340px; background: #212529; border: 1px solid #495057; border-radius: 8px; padding: 1.2rem; display: none; font-size: .82rem; line-height: 1.7; max-height: 80vh; overflow-y: auto; }
-  #detail-panel h3 { color: #74c0fc; font-size: 1rem; margin-bottom: .5rem; }
-  #detail-panel .dp-field { color: #adb5bd; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; margin-top: .7rem; }
-  #detail-panel .dp-val { color: #e9ecef; }
-  #detail-panel .close-btn { float: right; cursor: pointer; color: #adb5bd; font-size: 1.1rem; }
-  #detail-panel .tc-box { background: #1a1b2e; border-radius: 5px; padding: .7rem; margin-top: .4rem; font-size: .76rem; border-left: 3px solid #0d6efd; }
+  #graph { flex: 1; }
+  .sidebar { width: 300px; background: #1a2332; border-left: 1px solid #2a3a52; padding: 16px; overflow-y: auto; flex-shrink: 0; }
+  .sidebar h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7a99; margin: 16px 0 8px 0; }
+  .sidebar h2:first-child { margin-top: 0; }
+  .sidebar .issue-list { list-style: none; padding: 0; margin: 0; }
+  .sidebar .issue-list li { font-size: 12px; padding: 4px 8px; background: #0f1724; border-radius: 4px; margin-bottom: 4px; color: #cdd6f4; }
+  .sidebar .issue-list li span { font-size: 10px; display: block; color: #6b7a99; }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; margin-bottom: 6px; }
+  .badge.l1 { background: #1d4e7e; color: #5dade2; }
+  .badge.l2 { background: #1a4731; color: #52be80; }
+  .badge.issue { background: #7b1e1e; color: #f1948a; }
+  .badge.ok { background: #1a4731; color: #52be80; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #8a9bb0; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .tooltip { position: absolute; background: #1a2332; border: 1px solid #2a3a52; padding: 10px 14px; border-radius: 6px; font-size: 12px; pointer-events: none; display: none; max-width: 240px; line-height: 1.5; color: #cdd6f4; z-index: 100; }
+  .stats { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: #0f1724; border-radius: 6px; padding: 8px 12px; flex: 1; min-width: 60px; text-align: center; }
+  .stat .v { font-size: 22px; font-weight: 700; }
+  .stat .l { font-size: 10px; color: #6b7a99; text-transform: uppercase; }
+  .empty { color: #4a5568; font-size: 12px; font-style: italic; padding: 4px 0; }
+  svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 </style>
 </head>
 <body>
 <div class="topbar">
-  <h1>Traceability Graph — PII Anonymizer Sidecar</h1>
-  <p>Source: requirements.json &nbsp;|&nbsp; 2026-02-23 11:36</p>
-  <span class="badge l1">L1 = System</span>
-  <span class="badge l2">L2 = Subsystem</span>
+  <h1>⬡ Requirements Traceability Graph</h1>
+  <span class="meta">pii_anonymizer_requirements_v2.json · 2026-02-26T12:50:37.036016+00:00Z</span>
 </div>
 <div class="layout">
-  <div id="sidebar">
-    <h3>🔗 Interfaces</h3>
-    <div id="iface-list"></div>
-    <h3>L1 System Requirements</h3>
-    <div id="l1-list"></div>
-    <h3>L2 Subsystem Requirements</h3>
-    <div id="l2-list"></div>
-    <h3>⚠️ Issues</h3>
-    <div id="issues-list"></div>
+<svg id="graph"></svg>
+<div class="sidebar">
+  <div class="stats" id="stats"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#2980b9"></div>L1 System Req</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#27ae60;border-radius:50%"></div>L2 Subsystem Req</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e74c3c;border-radius:50%"></div>Untested</div>
   </div>
-  <div id="canvas">
-    <svg id="svg"></svg>
-    <div id="tooltip"></div>
-    <div id="detail-panel"></div>
-    <div class="controls">
-      <button class="btn" onclick="resetZoom()">Reset View</button>
-      <button class="btn" onclick="toggleLabels()">Toggle Labels</button>
-    </div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#0d6efd"></div> L1 System Req</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#20c997"></div> L2 CTRL</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#fd7e14"></div> L2 DAT</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#dc3545"></div> L2 SEC</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#6f42c1"></div> L2 PERF</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#fcc419; border:2px solid #dc3545"></div> Orphan</div>
-    </div>
-  </div>
+
+  <h2>🔴 Orphan Requirements</h2>
+  <ul class="issue-list" id="orphan-list"></ul>
+
+  <h2>🟡 Childless L1 Requirements</h2>
+  <ul class="issue-list" id="childless-list"></ul>
+
+  <h2>⚫ Untested Requirements</h2>
+  <ul class="issue-list" id="untested-list"></ul>
+
+  <h2>🔗 Broken Links</h2>
+  <ul class="issue-list" id="broken-list"></ul>
 </div>
+</div>
+<div class="tooltip" id="tooltip"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script>
-const allNodes = [{"id": "SYS-001", "title": "Anonymize Text via REST API", "level": "L1", "status": "Draft", "interface": "API Request / API Response", "flags": [], "test_method": "Test"}, {"id": "SYS-002", "title": "Restore Anonymized Text via REST API", "level": "L1", "status": "Draft", "interface": "API Request / API Response", "flags": [], "test_method": "Test"}, {"id": "SYS-003", "title": "Enforce Bearer Token Authentication on API", "level": "L1", "status": "Draft", "interface": "API Request / API Response", "flags": [], "test_method": "Test"}, {"id": "SYS-004", "title": "Expose Health Endpoint on Loopback Only", "level": "L1", "status": "Draft", "interface": "Admin Interface", "flags": [], "test_method": "Test"}, {"id": "SYS-005", "title": "Expose Session Inspection via Admin Interface", "level": "L1", "status": "Draft", "interface": "Admin Interface", "flags": [], "test_method": "Test"}, {"id": "SYS-006", "title": "Support Session Deletion via Admin Interface", "level": "L1", "status": "Draft", "interface": "Admin Interface", "flags": [], "test_method": "Test"}, {"id": "SYS-007", "title": "Accept CLI Anonymize Command", "level": "L1", "status": "Draft", "interface": "CLI Command / CLI Output", "flags": [], "test_method": "Test"}, {"id": "SYS-008", "title": "Accept CLI Restore Command", "level": "L1", "status": "Draft", "interface": "CLI Command / CLI Output", "flags": [], "test_method": "Test"}, {"id": "SYS-009", "title": "Accept CLI Show Command", "level": "L1", "status": "Draft", "interface": "CLI Command / CLI Output", "flags": [], "test_method": "Test"}, {"id": "SYS-010", "title": "Accept CLI Reset Command", "level": "L1", "status": "Draft", "interface": "CLI Command / CLI Output", "flags": [], "test_method": "Test"}, {"id": "SYS-011", "title": "Accept CLI Serve Command", "level": "L1", "status": "Draft", "interface": "CLI Command / CLI Output", "flags": [], "test_method": "Test"}, {"id": "SYS-012", "title": "Persist Session Mappings Across Restarts", "level": "L1", "status": "Draft", "interface": "Vault Storage", "flags": [], "test_method": "Test"}, {"id": "SYS-013", "title": "Enforce Session TTL Expiry", "level": "L1", "status": "Draft", "interface": "Vault Storage", "flags": [], "test_method": "Test"}, {"id": "SYS-014", "title": "Accept HTTPS Requests via Caddy Proxy", "level": "L1", "status": "Draft", "interface": "HTTP Forward (Caddy \u2192 SOI)", "flags": [], "test_method": "Test"}, {"id": "SYS-015", "title": "Reject Requests Exceeding Maximum Size", "level": "L1", "status": "Draft", "interface": "API Request / API Response", "flags": [], "test_method": "Test"}, {"id": "SYS-016", "title": "Produce Deterministic Placeholders Within Session", "level": "L1", "status": "Draft", "interface": "API Request / API Response", "flags": [], "test_method": "Test"}, {"id": "SUB-CTRL-001", "title": "Detect PERSON and ORG Entities via Presidio", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-CTRL-002", "title": "Apply Span-Safe Placeholder Substitution", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-CTRL-003", "title": "Restore Placeholders via Exact Match", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-CTRL-004", "title": "Bind Service to Loopback by Default", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-CTRL-005", "title": "CLI Delegates to Library in Local Mode", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-CTRL-006", "title": "CLI Restore Delegates to Library in Local Mode", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-CTRL-007", "title": "CLI Show Formats Output as Table or JSON", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-CTRL-008", "title": "CLI Reset Clears Session and Confirms on Stdout", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-CTRL-009", "title": "Serve Command Logs Startup to Stdout", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-DAT-001", "title": "Atomic Get-or-Create Mapping in Vault", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-DAT-002", "title": "Retrieve Mapping by Placeholder for Restore", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-DAT-003", "title": "List Session Mappings with Limit", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-DAT-004", "title": "Delete Session with Cascade", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-DAT-005", "title": "Initialize SQLite Schema on First Run", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-DAT-006", "title": "Purge Expired Sessions by TTL", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-SEC-001", "title": "Validate Bearer Token on Every Protected Request", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-SEC-002", "title": "Admin Route Middleware Blocks Non-Loopback", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-SEC-003", "title": "Caddy TLS Termination Forwards Headers Intact", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Inspection"}, {"id": "SUB-SEC-004", "title": "Request Size Middleware Enforces Limit", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-PERF-001", "title": "Anonymize Latency Under 2 Seconds for Typical Input", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}, {"id": "SUB-PERF-002", "title": "Size Limit Check Adds Under 5 Milliseconds Overhead", "level": "L2", "status": "Draft", "interface": null, "flags": [], "test_method": "Test"}];
-const allLinks = [{"source": "SYS-001", "target": "SUB-CTRL-001"}, {"source": "SYS-001", "target": "SUB-CTRL-002"}, {"source": "SYS-001", "target": "SUB-DAT-001"}, {"source": "SYS-001", "target": "SUB-PERF-001"}, {"source": "SYS-002", "target": "SUB-CTRL-003"}, {"source": "SYS-002", "target": "SUB-DAT-002"}, {"source": "SYS-003", "target": "SUB-SEC-001"}, {"source": "SYS-004", "target": "SUB-SEC-002"}, {"source": "SYS-004", "target": "SUB-CTRL-004"}, {"source": "SYS-005", "target": "SUB-DAT-003"}, {"source": "SYS-006", "target": "SUB-DAT-004"}, {"source": "SYS-007", "target": "SUB-CTRL-005"}, {"source": "SYS-007", "target": "SUB-CTRL-001"}, {"source": "SYS-008", "target": "SUB-CTRL-006"}, {"source": "SYS-008", "target": "SUB-CTRL-003"}, {"source": "SYS-009", "target": "SUB-DAT-003"}, {"source": "SYS-009", "target": "SUB-CTRL-007"}, {"source": "SYS-010", "target": "SUB-DAT-004"}, {"source": "SYS-010", "target": "SUB-CTRL-008"}, {"source": "SYS-011", "target": "SUB-CTRL-004"}, {"source": "SYS-011", "target": "SUB-CTRL-009"}, {"source": "SYS-012", "target": "SUB-DAT-001"}, {"source": "SYS-012", "target": "SUB-DAT-002"}, {"source": "SYS-012", "target": "SUB-DAT-005"}, {"source": "SYS-013", "target": "SUB-DAT-006"}, {"source": "SYS-014", "target": "SUB-SEC-003"}, {"source": "SYS-015", "target": "SUB-SEC-004"}, {"source": "SYS-015", "target": "SUB-PERF-002"}, {"source": "SYS-016", "target": "SUB-CTRL-001"}, {"source": "SYS-016", "target": "SUB-DAT-001"}];
-const orphanIds = new Set([]);
-const childlessIds = new Set([]);
-const ifaceMap = {"API Request / API Response": ["SYS-001", "SYS-002", "SYS-003", "SYS-015", "SYS-016"], "Admin Interface": ["SYS-004", "SYS-005", "SYS-006"], "CLI Command / CLI Output": ["SYS-007", "SYS-008", "SYS-009", "SYS-010", "SYS-011"], "Vault Storage": ["SYS-012", "SYS-013"], "HTTP Forward (Caddy \u2192 SOI)": ["SYS-014"]};
+const nodes = [{"id": "SYS-001", "title": "Anonymize PII in submitted text via HTTPS", "level": "L1", "status": "Draft", "interface": "IF-HTTPS-API", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SYS-002", "title": "Restore placeholders to originals via HTTPS", "level": "L1", "status": "Draft", "interface": "IF-HTTPS-API", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SYS-003", "title": "Reject unauthenticated API requests", "level": "L1", "status": "Draft", "interface": "IF-HTTPS-API", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SYS-004", "title": "Enforce HTTPS-only transport for all API traffic", "level": "L1", "status": "Draft", "interface": "IF-TLS", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SUB-DAT-004", "title": "Persist session mappings across service restarts", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-DAT-005", "title": "Expire and purge sessions after configurable TTL", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SYS-007", "title": "Anonymize and restore text via CLI", "level": "L1", "status": "Draft", "interface": "IF-CLI", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SYS-008", "title": "Expose session inspection and reset via CLI", "level": "L1", "status": "Draft", "interface": "IF-CLI", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SYS-009", "title": "Expose health status via admin endpoint", "level": "L1", "status": "Draft", "interface": "IF-ADMIN", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SYS-010", "title": "Restrict admin session management to loopback", "level": "L1", "status": "Draft", "interface": "IF-ADMIN", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SYS-011", "title": "Survive service restart without session data loss", "level": "L1", "status": "Draft", "interface": "IF-HTTPS-API", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SUB-CTRL-001", "title": "Detect PERSON and ORG entities in input text", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-CTRL-002", "title": "Assign deterministic session-scoped placeholders", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-CTRL-003", "title": "Replace entity spans with placeholders in source text", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-CTRL-004", "title": "Report service health including vault connectivity", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-DAT-001", "title": "Persist mapping records atomically to SQLite vault", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-DAT-002", "title": "Initialise SQLite schema on first startup", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-DAT-003", "title": "Purge expired sessions and cascade-delete their mappings", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-SEC-001", "title": "Validate Bearer Token on all /v1/* requests", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-SEC-002", "title": "Enforce request payload size limit", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-SEC-003", "title": "Configure Caddy to terminate TLS and enforce minimum protocol version", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-SEC-004", "title": "Bind admin and health endpoints to loopback interface only", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-INT-001", "title": "CLI commands invoke library functions directly without HTTP", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-INT-002", "title": "CLI --json flag emits machine-readable output", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SYS-012", "title": "Reject oversized API request payloads", "level": "L1", "status": "Draft", "interface": "IF-HTTPS-API", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SYS-013", "title": "Provide streaming-compatible restore guidance via API", "level": "L1", "status": "Draft", "interface": "IF-HTTPS-API", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SYS-014", "title": "Honour per-request allowlist and denylist entity overrides", "level": "L1", "status": "Draft", "interface": "IF-HTTPS-API", "color": "#2980b9", "shape": "rect", "has_test": true}, {"id": "SUB-INT-003", "title": "Implement rolling-buffer restore for streamed chunks", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}, {"id": "SUB-CTRL-005", "title": "Apply allowlist and denylist filters before placeholder assignment", "level": "L2", "status": "Draft", "interface": "", "color": "#27ae60", "shape": "circle", "has_test": true}];
+const links = [{"source": "SYS-001", "target": "SUB-CTRL-001"}, {"source": "SYS-001", "target": "SUB-CTRL-002"}, {"source": "SYS-001", "target": "SUB-DAT-001"}, {"source": "SYS-001", "target": "SUB-SEC-001"}, {"source": "SYS-002", "target": "SUB-CTRL-003"}, {"source": "SYS-002", "target": "SUB-DAT-001"}, {"source": "SYS-002", "target": "SUB-SEC-001"}, {"source": "SYS-003", "target": "SUB-SEC-001"}, {"source": "SYS-004", "target": "SUB-SEC-003"}, {"source": "SUB-DAT-004", "target": "SUB-DAT-001"}, {"source": "SUB-DAT-004", "target": "SUB-DAT-002"}, {"source": "SUB-DAT-005", "target": "SUB-DAT-002"}, {"source": "SUB-DAT-005", "target": "SUB-DAT-003"}, {"source": "SYS-007", "target": "SUB-CTRL-001"}, {"source": "SYS-007", "target": "SUB-CTRL-003"}, {"source": "SYS-007", "target": "SUB-INT-001"}, {"source": "SYS-007", "target": "SUB-INT-002"}, {"source": "SYS-008", "target": "SUB-INT-001"}, {"source": "SYS-008", "target": "SUB-DAT-003"}, {"source": "SYS-009", "target": "SUB-CTRL-004"}, {"source": "SYS-009", "target": "SUB-SEC-004"}, {"source": "SYS-010", "target": "SUB-SEC-004"}, {"source": "SYS-010", "target": "SUB-SEC-001"}, {"source": "SYS-011", "target": "SUB-DAT-004"}, {"source": "SYS-011", "target": "SUB-DAT-005"}, {"source": "SYS-012", "target": "SUB-SEC-002"}, {"source": "SYS-013", "target": "SUB-INT-003"}, {"source": "SYS-014", "target": "SUB-CTRL-005"}];
+const orphans = new Set([]);
+const childless = new Set([]);
+const untested = new Set([]);
+const brokenLinks = [];
+
+// ── Sidebar population ───────────────────────────────────────────────────────
 const nodeMap = {};
-allNodes.forEach(n => nodeMap[n.id] = n);
+nodes.forEach(n => nodeMap[n.id] = n);
 
-// All requirement descriptions (for detail panel) - load from embedded data
-const reqData = allNodes;
-
-function nodeColor(n) {
-  if (n.level === "L1") return "#0d6efd";
-  if (orphanIds.has(n.id)) return "#fcc419";
-  const domain = n.id.split("-")[1] || "";
-  if (domain === "CTRL") return "#20c997";
-  if (domain === "DAT") return "#fd7e14";
-  if (domain === "SEC") return "#dc3545";
-  if (domain === "PERF") return "#6f42c1";
-  return "#adb5bd";
+function fillList(listId, ids, emptyMsg) {
+  const ul = document.getElementById(listId);
+  if (!ids.length) {
+    ul.innerHTML = `<li class="empty">${emptyMsg}</li>`;
+    return;
+  }
+  ids.forEach(id => {
+    const n = nodeMap[id] || {};
+    ul.innerHTML += `<li>
+      <span class="badge ${(n.level||'').toLowerCase()}">${n.level || '?'}</span>
+      <strong>${id}</strong>
+      <span>${n.title || ''}</span>
+    </li>`;
+  });
 }
 
-function nodeRadius(n) { return n.level === "L1" ? 18 : 12; }
+fillList("orphan-list", [...orphans], "None — all L2 requirements have parents ✓");
+fillList("childless-list", [...childless], "None — all L1 requirements have children ✓");
+fillList("untested-list", [...untested], "None — all requirements have test cases ✓");
 
-// Sidebar
-const ifaceDiv = document.getElementById("iface-list");
-Object.entries(ifaceMap).forEach(([iface, ids]) => {
-  const tag = document.createElement("span");
-  tag.className = "iface-tag";
-  tag.textContent = `${iface} (${ids.length})`;
-  tag.onclick = () => highlightNodes(ids);
-  ifaceDiv.appendChild(tag);
-});
-
-["l1","l2"].forEach(lvl => {
-  const div = document.getElementById(`${lvl}-list`);
-  allNodes.filter(n => n.level.toLowerCase() === lvl).forEach(n => {
-    const el = document.createElement("div");
-    el.className = "sidebar-item" + (orphanIds.has(n.id) ? " orphan" : "");
-    el.innerHTML = `<div class="sid">${n.id}</div><div class="stitle">${n.title}</div>`;
-    el.onclick = () => selectNode(n.id);
-    div.appendChild(el);
-  });
-});
-
-const issuesDiv = document.getElementById("issues-list");
-if (orphanIds.size === 0 && childlessIds.size === 0) {
-  issuesDiv.innerHTML = '<div class="sidebar-item" style="color:#28a745">✓ No issues detected</div>';
+const bl = document.getElementById("broken-list");
+if (!brokenLinks.length) {
+  bl.innerHTML = '<li class="empty">No broken links ✓</li>';
 } else {
-  [...orphanIds].forEach(id => {
-    const el = document.createElement("div");
-    el.className = "sidebar-item orphan";
-    el.innerHTML = `<div class="sid">ORPHAN</div><div class="stitle">${id}</div>`;
-    el.onclick = () => selectNode(id);
-    issuesDiv.appendChild(el);
+  brokenLinks.forEach(b => {
+    bl.innerHTML += `<li><strong>${b.from}</strong> → <span style="color:#e74c3c">${b.missing}</span> <span>(missing ${b.direction})</span></li>`;
   });
 }
 
-// D3 Force Graph
-const svg = d3.select("#svg");
-const width = document.getElementById("canvas").clientWidth;
-const height = document.getElementById("canvas").clientHeight;
+// Stats
+const l1count = nodes.filter(n => n.level === "L1").length;
+const l2count = nodes.filter(n => n.level === "L2").length;
+const issueCount = orphans.size + childless.size + untested.size + brokenLinks.length;
+document.getElementById("stats").innerHTML = `
+  <div class="stat"><div class="v" style="color:#2980b9">${l1count}</div><div class="l">L1 Reqs</div></div>
+  <div class="stat"><div class="v" style="color:#27ae60">${l2count}</div><div class="l">L2 Reqs</div></div>
+  <div class="stat"><div class="v" style="color:${issueCount > 0 ? '#e74c3c' : '#27ae60'}">${issueCount}</div><div class="l">Issues</div></div>
+`;
+
+// ── D3 Graph ─────────────────────────────────────────────────────────────────
+const svg = d3.select("#graph");
+const container = document.getElementById("graph");
+const tooltip = document.getElementById("tooltip");
+
+function getSize() {
+  return { w: container.clientWidth, h: container.clientHeight };
+}
+
+let { w, h } = getSize();
+svg.attr("width", w).attr("height", h);
 
 const g = svg.append("g");
 
-const zoom = d3.zoom().scaleExtent([0.3, 3]).on("zoom", e => g.attr("transform", e.transform));
-svg.call(zoom);
-
-const simulation = d3.forceSimulation(allNodes)
-  .force("link", d3.forceLink(allLinks).id(d => d.id).distance(d => {
-    return (d.source.level === "L1" && d.target.level === "L2") ? 120 : 80;
-  }).strength(0.6))
+const simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(d => d.id).distance(120))
   .force("charge", d3.forceManyBody().strength(-400))
-  .force("center", d3.forceCenter(width / 2, height / 2))
-  .force("collision", d3.forceCollide().radius(d => nodeRadius(d) + 20));
+  .force("center", d3.forceCenter(w / 2, h / 2))
+  .force("collision", d3.forceCollide(50));
 
-const link = g.append("g").attr("class","links")
-  .selectAll("line").data(allLinks).join("line")
-  .attr("class","link")
-  .attr("stroke","#495057")
-  .attr("stroke-width", 1.5)
-  .attr("marker-end","url(#arrow)");
-
+// Arrow marker
 svg.append("defs").append("marker")
-  .attr("id","arrow").attr("viewBox","0 -5 10 10").attr("refX",20).attr("refY",0)
-  .attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto")
-  .append("path").attr("d","M0,-5L10,0L0,5").attr("fill","#6c757d");
+  .attr("id", "arrow")
+  .attr("viewBox", "0 -5 10 10")
+  .attr("refX", 22)
+  .attr("refY", 0)
+  .attr("markerWidth", 6)
+  .attr("markerHeight", 6)
+  .attr("orient", "auto")
+  .append("path")
+  .attr("d", "M0,-5L10,0L0,5")
+  .attr("fill", "#3a5a7a");
 
-const node = g.append("g").attr("class","nodes")
-  .selectAll("g").data(allNodes).join("g")
-  .attr("class","node")
+const link = g.append("g")
+  .selectAll("line")
+  .data(links)
+  .join("line")
+  .attr("stroke", "#2a3a52")
+  .attr("stroke-width", 1.5)
+  .attr("marker-end", "url(#arrow)");
+
+const nodeGroup = g.append("g")
+  .selectAll("g")
+  .data(nodes)
+  .join("g")
   .call(d3.drag()
-    .on("start", (e,d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
-    .on("drag", (e,d) => { d.fx=e.x; d.fy=e.y; })
-    .on("end", (e,d) => { if (!e.active) simulation.alphaTarget(0); d.fx=null; d.fy=null; }))
-  .on("click", (e,d) => showDetail(d))
-  .on("mouseover", showTooltip)
-  .on("mousemove", moveTooltip)
-  .on("mouseout", hideTooltip);
+    .on("start", (event, d) => { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+    .on("drag", (event, d) => { d.fx = event.x; d.fy = event.y; })
+    .on("end", (event, d) => { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }))
+  .on("mouseover", (event, d) => {
+    const tc = d.has_test ? "Test: yes" : "Test: MISSING";
+    const iface = d.level === "L1" && d.interface ? `Interface: ${d.interface}<br>` : "";
+    let issues = [];
+    if (orphans.has(d.id)) issues.push("Orphan (no parent)");
+    if (childless.has(d.id)) issues.push("No children");
+    if (!d.has_test) issues.push("Untested");
+    tooltip.style.display = "block";
+    tooltip.innerHTML = `<strong>${d.id}</strong><br><span style="color:#8a9bb0">${d.title}</span><br>${iface}${tc}<br>Status: ${d.status}${issues.length ? '<br>' + issues.join(' · ') : ''}`;
+  })
+  .on("mousemove", (event) => {
+    tooltip.style.left = (event.pageX + 12) + "px";
+    tooltip.style.top = (event.pageY - 10) + "px";
+  })
+  .on("mouseout", () => { tooltip.style.display = "none"; });
 
-node.append("circle")
-  .attr("r", d => nodeRadius(d))
-  .attr("fill", d => nodeColor(d))
-  .attr("stroke", d => orphanIds.has(d.id) ? "#dc3545" : (childlessIds.has(d.id) ? "#ffc107" : "rgba(255,255,255,.15)"))
-  .attr("stroke-width", d => (orphanIds.has(d.id) || childlessIds.has(d.id)) ? 3 : 1.5);
+// Draw shapes: rect for L1, circle for L2
+nodeGroup.each(function(d) {
+  const el = d3.select(this);
+  const isOrphan = orphans.has(d.id);
+  const isChildless = childless.has(d.id);
+  const isUntested = untested.has(d.id);
+  const baseColor = isUntested ? "#7b1e1e" : (d.level === "L1" ? "#1d4e7e" : "#1a4731");
+  const strokeColor = isOrphan ? "#e74c3c" : (isChildless ? "#e67e22" : (d.level === "L1" ? "#2980b9" : "#27ae60"));
+  const strokeW = (isOrphan || isChildless) ? 2.5 : 1.5;
 
-let labelsVisible = true;
-const labels = node.append("text")
-  .attr("dy", d => nodeRadius(d) + 12)
-  .attr("text-anchor","middle")
-  .text(d => d.id)
-  .style("font-size","9px")
-  .style("fill","#adb5bd");
+  if (d.level === "L1") {
+    el.append("rect")
+      .attr("width", 100).attr("height", 36)
+      .attr("rx", 5).attr("ry", 5)
+      .attr("x", -50).attr("y", -18)
+      .attr("fill", baseColor)
+      .attr("stroke", strokeColor)
+      .attr("stroke-width", strokeW);
+  } else {
+    el.append("circle")
+      .attr("r", 22)
+      .attr("fill", baseColor)
+      .attr("stroke", strokeColor)
+      .attr("stroke-width", strokeW);
+  }
 
-simulation.on("tick", () => {
-  link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y)
-      .attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
-  node.attr("transform",d=>`translate(${d.x},${d.y})`);
+  el.append("text")
+    .attr("text-anchor", "middle")
+    .attr("dy", "0.35em")
+    .attr("fill", d.level === "L1" ? "#5dade2" : "#52be80")
+    .attr("font-size", "10px")
+    .attr("font-weight", "600")
+    .text(d.id);
 });
 
-// Tooltip
-const tooltip = document.getElementById("tooltip");
-function showTooltip(e, d) {
-  tooltip.style.display = "block";
-  tooltip.innerHTML = `
-    <div class="t-id">${d.id}</div>
-    <div class="t-label">${d.level} · ${d.test_method}</div>
-    ${d.interface ? `<div class="t-iface">⚡ ${d.interface}</div>` : ""}
-    <div class="t-desc">${d.title}</div>
-    ${orphanIds.has(d.id) ? '<div style="color:#dc3545;margin-top:.3rem">⚠ Orphan — no parent L1</div>' : ""}
-  `;
-  moveTooltip(e);
-}
-function moveTooltip(e) {
-  const x = e.clientX + 12, y = e.clientY - 10;
-  tooltip.style.left = x + "px"; tooltip.style.top = y + "px";
-}
-function hideTooltip() { tooltip.style.display = "none"; }
+simulation.on("tick", () => {
+  link
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+  nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+});
 
-// Detail panel
-const fullData = {};
-allNodes.forEach(n => fullData[n.id] = n);
+// Zoom
+svg.call(d3.zoom().on("zoom", (event) => { g.attr("transform", event.transform); }));
 
-function showDetail(d) {
-  const panel = document.getElementById("detail-panel");
-  const iface = d.interface ? `<div class="dp-field">Interface</div><div class="dp-val">${d.interface}</div>` : "";
-  const tc = d.test_case || {};
-  const tcHtml = tc.id ? `
-    <div class="dp-field">Test Case</div>
-    <div class="tc-box">
-      <strong>${tc.id}</strong><br>
-      <span style="color:#adb5bd">Preconditions:</span> ${tc.preconditions || "—"}<br>
-      <span style="color:#adb5bd">Procedure:</span> ${(tc.procedure || "—").substring(0,180)}...<br>
-      <span style="color:#adb5bd">Pass:</span> ${(tc.pass_criterion || "—").substring(0,120)}
-    </div>` : "";
-  const parents = (d.parent_ids||[]).join(", ") || "—";
-  const children = (d.child_ids||[]).join(", ") || "—";
-  panel.style.display = "block";
-  panel.innerHTML = `
-    <span class="close-btn" onclick="document.getElementById('detail-panel').style.display='none'">✕</span>
-    <h3>${d.id}</h3>
-    <div style="color:#adb5bd;font-size:.78rem;margin-bottom:.5rem">${d.level} · ${d.test_method} · ${d.status}</div>
-    <strong style="color:#e9ecef">${d.title}</strong>
-    ${iface}
-    <div class="dp-field">Parents</div><div class="dp-val">${parents}</div>
-    <div class="dp-field">Children</div><div class="dp-val">${children}</div>
-    ${tcHtml}
-  `;
-  highlightNodes([d.id, ...(d.parent_ids||[]), ...(d.child_ids||[])]);
-}
-
-function highlightNodes(ids) {
-  const set = new Set(ids);
-  node.select("circle").attr("opacity", n => set.has(n.id) ? 1 : 0.25);
-  link.attr("opacity", l => set.has(l.source.id) || set.has(l.target.id) ? 1 : 0.1);
-  labels.attr("opacity", n => set.has(n.id) ? 1 : 0.2);
-}
-
-function selectNode(id) {
-  const n = allNodes.find(x => x.id === id);
-  if (n) showDetail(n);
-}
-
-function resetZoom() {
-  svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
-  node.select("circle").attr("opacity", 1);
-  link.attr("opacity", 1);
-  labels.attr("opacity", 1);
-  document.getElementById("detail-panel").style.display = "none";
-}
-
-function toggleLabels() {
-  labelsVisible = !labelsVisible;
-  labels.style("display", labelsVisible ? null : "none");
-}
+// Resize
+window.addEventListener("resize", () => {
+  const size = getSize();
+  svg.attr("width", size.w).attr("height", size.h);
+  simulation.force("center", d3.forceCenter(size.w / 2, size.h / 2)).alpha(0.3).restart();
+});
 </script>
 </body>
 </html>

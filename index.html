@@ -12,7 +12,7 @@
     h1,h2,h3 { margin:0 0 10px 0; }
     p,li { color:var(--text); }
     .muted { color:var(--muted); }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:16px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-top:16px; }
     .card { background:var(--card); border:1px solid #22305f; border-radius:12px; padding:14px; }
     .kpi { font-size:1.7rem; font-weight:700; }
     .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
@@ -22,7 +22,13 @@
     th { background:#192751; text-align:left; }
     a { color:var(--link); }
     .cols { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
-    img { max-width:100%; border-radius:12px; border:1px solid #2a3c73; background:#fff; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:0.82rem; font-weight:600; }
+    .badge-pass { background:#1a3d2a; color:var(--ok); }
+    .badge-fail { background:#3d1a1a; color:var(--bad); }
+    .badge-draft { background:#2a2a3d; color:var(--muted); }
+    .nav { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
+    .nav a { background:#192751; padding:6px 14px; border-radius:8px; text-decoration:none; font-size:0.9rem; border:1px solid #263768; }
+    .nav a:hover { background:#243364; }
     @media (max-width:900px) { .cols { grid-template-columns:1fr; } }
   </style>
 </head>
@@ -30,12 +36,20 @@
   <div class="wrap">
     <div class="hero">
       <h1>PII Anonymizer Sidecar — Management Overview</h1>
-      <p class="muted">Single-page project cockpit consolidating SPEC, development plan, requirements, architecture, and verification evidence.</p>
+      <p class="muted">Single-page project cockpit · Updated 2026-02-26</p>
+      <div class="nav">
+        <a href="SPEC.html">📋 SPEC</a>
+        <a href="DEV_PLAN.html">🗓 Dev Plan</a>
+        <a href="requirements.html">📝 Requirements</a>
+        <a href="traceability_graph.html">🔗 Traceability</a>
+        <a href="quality_report.html">✅ Quality Report</a>
+      </div>
       <div class="grid">
-        <div class="card"><div class="muted">Requirements total</div><div class="kpi">23</div></div>
-        <div class="card"><div class="muted">L1 / L2 split</div><div class="kpi">10 / 13</div></div>
-        <div class="card"><div class="muted">Verification PASS</div><div class="kpi ok">9</div></div>
-        <div class="card"><div class="muted">Verification BLOCKED</div><div class="kpi warn">1</div></div>
+        <div class="card"><div class="muted">Requirements total</div><div class="kpi">29</div></div>
+        <div class="card"><div class="muted">L1 / L2 split</div><div class="kpi">12 / 17</div></div>
+        <div class="card"><div class="muted">Verified PASS</div><div class="kpi ok">6</div></div>
+        <div class="card"><div class="muted">Verified FAIL</div><div class="kpi bad">4</div></div>
+        <div class="card"><div class="muted">Draft (unverified)</div><div class="kpi warn">19</div></div>
       </div>
     </div>
 
@@ -43,70 +57,238 @@
       <h2>Executive summary</h2>
       <ul>
         <li>Project delivers a <b>standalone privacy-first sidecar</b> for anonymize/restore of PERSON and ORG entities, without calling any LLM.</li>
-        <li>Phases 0-7 are marked complete in DEV_PLAN; packaging, API, CLI, and integration examples are delivered.</li>
-        <li>Systems engineering package includes L1/L2 requirements and per-test HTML evidence.</li>
-        <li>Main risk still open: TLS deployment requirement (SYS-004) is blocked pending domain/HTTPS setup.</li>
+        <li>All 8 development phases (0–7) are complete: packaging, API, CLI, and integration examples are delivered.</li>
+        <li>Systems engineering package has been <b>expanded from v1 to v2</b> — requirements grew from 23 to <b>29</b> (12 L1 + 17 L2), adding restart resilience, payload limits, streaming restore, and entity override requirements.</li>
+        <li><b>Retest on deploy-vps (2026-02-26)</b> revealed 4 L1 failures: auth not enforced (SYS-003), no TLS (SYS-004), loopback restriction not enforced on health (SYS-009) and admin (SYS-010). These are deployment-configuration gaps, not code defects.</li>
+        <li>4 new L1 requirements (SYS-011 to SYS-014) and 15 new L2 requirements remain in Draft status, pending test development.</li>
       </ul>
     </section>
 
     <section class="card">
       <h2>Scope snapshot (from SPEC)</h2>
       <div class="cols">
-        <div><h3>Must (P0)</h3><ul></ul></div>
-        <div><h3>Should (P1)</h3><ul></ul></div>
-        <div><h3>Could (P2)</h3><ul></ul></div>
+        <div>
+          <h3>Must (P0)</h3>
+          <ul>
+            <li>Standalone sidecar — API + CLI, no LLM calls</li>
+            <li>Local-only PII handling (no outbound calls)</li>
+            <li>Anonymize + restore primitives with session keys</li>
+            <li>PERSON &amp; ORG entity detection</li>
+            <li>Deterministic placeholders per session</li>
+            <li>SQLite vault for persistence</li>
+            <li>Session TTL + explicit delete/reset</li>
+            <li>Unit + integration tests</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Should (P1)</h3>
+          <ul>
+            <li>CLI UX (anonymize, restore, show, reset)</li>
+            <li>Library mode (importable Python package)</li>
+            <li>Streaming-friendly restore guidance</li>
+            <li>Allowlist/denylist rules + per-request overrides</li>
+            <li>Request size limits, timeouts, auth option</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Could (P2)</h3>
+          <ul>
+            <li>Expand entities (EMAIL, PHONE, ADDRESS…)</li>
+            <li>Cross-session vault reuse modes</li>
+            <li>Multi-language + language auto-detect</li>
+            <li>GDPR ops: export/delete, retention presets</li>
+          </ul>
+        </div>
       </div>
-      <p class="muted">Deep dive: <a href="SPEC.md">SPEC.md</a></p>
+      <p class="muted">Deep dive: <a href="SPEC.html">SPEC.html</a></p>
     </section>
 
     <section class="card">
-      <h2>Delivery timeline (what happened when)</h2>
-      <ol><li><b>2026-02-18</b> — Initial commit</li><li><b>2026-02-19</b> — Implement Phase 0: project scaffold and core library skeleton</li><li><b>2026-02-19</b> — Phase 0 review: PASS — feedback + DEV_PLAN updates</li><li><b>2026-02-19</b> — Implement Phase 1: async SQLite Vault with full test coverage</li><li><b>2026-02-19</b> — Phase 1 review: PASS with carry-forward items</li><li><b>2026-02-19</b> — Address Phase 1 review: normalize helper, API cleanup, concurrency tests</li><li><b>2026-02-19</b> — Phase 1 review updated: all P0 requirements PASS</li><li><b>2026-02-19</b> — Implement Phase 2: Presidio-backed AnonymizerEngine</li><li><b>2026-02-19</b> — Phase 2 review: PASS — all 14 requirements verified</li><li><b>2026-02-19</b> — DEV_PLAN: mark Phases 0-2 complete, add Phase 2 carry-forwards</li><li><b>2026-02-20</b> — Phase 3 review: PASS — anonymize/restore pipeline verified</li><li><b>2026-02-20</b> — DEV_PLAN: mark Phase 3 complete, add carry-forwards</li><li><b>2026-02-20</b> — Phase 2 carry-forward: MappingVersionMismatch + RestoreResponse versioning</li><li><b>2026-02-20</b> — Phase 3 review: re-verified after full push — PASS all 14 requirements</li><li><b>2026-02-20</b> — DEV_PLAN: update Phase 3 carry-forwards — optimistic safety now implemented</li><li><b>2026-02-21</b> — Phase 4: FastAPI service — endpoints, auth, middleware, lazy engine init</li><li><b>2026-02-21</b> — Phase 4 review: PASS (18/19) — one P1 carry-forward (delete-all guard)</li><li><b>2026-02-21</b> — Phase 5: CLI — local library + HTTP client modes</li><li><b>2026-02-21</b> — Phase 5 review: PASS (15/15) — all requirements met, P4-R12 carry-forward resolved</li><li><b>2026-02-21</b> — Phase 6: packaging, deployment, docs</li><li><b>2026-02-21</b> — Phase 6 review: PASS (10/10) — packaging, deployment, docs all verified</li><li><b>2026-02-21</b> — Phase 7: integration guide + Node middleware + Python pipeline examples</li><li><b>2026-02-21</b> — Phase 7 review: PASS (8/8) — all phases complete 🎉</li><li><b>2026-02-21</b> — Add Phase 5-7 implementation audit log</li><li><b>2026-02-23</b> — Add systems engineering artefacts: system context, system (L1 &amp; L2) requirements</li><li><b>2026-02-23</b> — Add system requirements verification results and HTML test reports</li><li><b>2026-02-25</b> — Reorganise artefacts into systems engineering/ folder structure</li></ol>
-      <p class="muted">Deep dive: <a href="DEV_PLAN.md">DEV_PLAN.md</a> and <code>git log</code>.</p>
+      <h2>Delivery timeline</h2>
+      <ol>
+        <li><b>2026-02-18</b> — Initial commit</li>
+        <li><b>2026-02-19</b> — Phase 0: project scaffold and core library skeleton</li>
+        <li><b>2026-02-19</b> — Phase 0 review: PASS</li>
+        <li><b>2026-02-19</b> — Phase 1: async SQLite Vault with full test coverage</li>
+        <li><b>2026-02-19</b> — Phase 1 review: PASS with carry-forward items</li>
+        <li><b>2026-02-19</b> — Phase 1 carry-forwards addressed: normalize helper, API cleanup, concurrency tests</li>
+        <li><b>2026-02-19</b> — Phase 2: Presidio-backed AnonymizerEngine</li>
+        <li><b>2026-02-19</b> — Phase 2 review: PASS — all 14 requirements verified</li>
+        <li><b>2026-02-20</b> — Phase 3: anonymize/restore pipeline</li>
+        <li><b>2026-02-20</b> — Phase 3 review: PASS — all 14 requirements verified</li>
+        <li><b>2026-02-20</b> — Phase 2 carry-forward: MappingVersionMismatch + RestoreResponse versioning</li>
+        <li><b>2026-02-21</b> — Phase 4: FastAPI service — endpoints, auth, middleware, lazy engine init</li>
+        <li><b>2026-02-21</b> — Phase 4 review: PASS (18/19) — one P1 carry-forward</li>
+        <li><b>2026-02-21</b> — Phase 5: CLI — local library + HTTP client modes</li>
+        <li><b>2026-02-21</b> — Phase 5 review: PASS (15/15)</li>
+        <li><b>2026-02-21</b> — Phase 6: packaging, deployment, docs</li>
+        <li><b>2026-02-21</b> — Phase 6 review: PASS (10/10)</li>
+        <li><b>2026-02-21</b> — Phase 7: integration guide + Node middleware + Python pipeline examples</li>
+        <li><b>2026-02-21</b> — Phase 7 review: PASS (8/8) — all phases complete 🎉</li>
+        <li><b>2026-02-23</b> — Systems engineering artefacts: system context diagram, L1 &amp; L2 requirements (v1)</li>
+        <li><b>2026-02-23</b> — System requirements verification results + HTML test reports</li>
+        <li><b>2026-02-25</b> — Reorganise artefacts into <code>systems engineering/</code> folder structure</li>
+        <li><b>2026-02-25</b> — Promote requirements to v2: expand from 23 → 29 requirements</li>
+        <li><b>2026-02-26</b> — Retest SYS requirements on deploy-vps; update verification results</li>
+        <li><b>2026-02-26</b> — Replace TC-SYS HTML reports with latest retest evidence</li>
+        <li><b>2026-02-26</b> — Add user needs activity diagram to systems engineering</li>
+      </ol>
+      <p class="muted">Deep dive: <a href="DEV_PLAN.html">DEV_PLAN.html</a></p>
     </section>
 
     <section class="card">
       <h2>Phase completion status</h2>
       <table>
         <thead><tr><th>Phase</th><th>Status</th></tr></thead>
-        <tbody><tr><td>Phase 0 - Repo scaffolding + contracts</td><td>✅ Complete</td></tr><tr><td>Phase 1 - SQLite vault + mapping engine</td><td>✅ Complete</td></tr><tr><td>Phase 2 - Presidio integration</td><td>✅ Complete</td></tr><tr><td>Phase 3 - Anonymize/restore pipeline</td><td>✅ Complete</td></tr><tr><td>Phase 4 - FastAPI service</td><td>✅ Complete</td></tr><tr><td>Phase 5 - CLI</td><td>✅ Complete</td></tr><tr><td>Phase 6 — Packaging + deployment</td><td>✅ Complete</td></tr><tr><td>Phase 7 - Integration preparedness (no OpenClaw work yet)</td><td>✅ Complete</td></tr></tbody>
+        <tbody>
+          <tr><td>Phase 0 — Repo scaffolding + contracts</td><td>✅ Complete</td></tr>
+          <tr><td>Phase 1 — SQLite vault + mapping engine</td><td>✅ Complete</td></tr>
+          <tr><td>Phase 2 — Presidio integration</td><td>✅ Complete</td></tr>
+          <tr><td>Phase 3 — Anonymize/restore pipeline</td><td>✅ Complete</td></tr>
+          <tr><td>Phase 4 — FastAPI service</td><td>✅ Complete</td></tr>
+          <tr><td>Phase 5 — CLI</td><td>✅ Complete</td></tr>
+          <tr><td>Phase 6 — Packaging + deployment</td><td>✅ Complete</td></tr>
+          <tr><td>Phase 7 — Integration preparedness</td><td>✅ Complete</td></tr>
+        </tbody>
       </table>
     </section>
 
     <section class="card">
-      <h2>Architecture</h2>
-      <p>System context and interface boundaries are shown below. For editing source, open the Excalidraw file.</p>
-      <p><a href="systems engineering/02_architecture/pii-anonymizer-sidecar-context-diagram.excalidraw">Open Excalidraw source</a></p>
-      <img src="systems engineering/02_architecture/pii-anonymizer-sidecar-context-diagram.png" alt="PII sidecar architecture context diagram" />
-    </section>
-
-    <section class="card">
-      <h2>Verification overview (L1 requirements)</h2>
+      <h2>Verification overview — L1 system requirements</h2>
       <table>
         <thead>
           <tr><th>Req ID</th><th>Requirement</th><th>Status</th><th>Date</th><th>Evidence</th><th>Notes</th></tr>
         </thead>
-        <tbody><tr><td>SYS-001</td><td>Anonymize PII in submitted text via HTTPS</td><td>PASS</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-001.html">TC-SYS-001 report</a></td><td>Cold-start latency 5.56s marginally exceeds 5s threshold; subsequent requests &lt;1s</td></tr><tr><td>SYS-002</td><td>Restore placeholders to originals via HTTPS</td><td>PASS</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-002.html">TC-SYS-002 report</a></td><td>—</td></tr><tr><td>SYS-003</td><td>Reject unauthenticated API requests</td><td>PASS</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-003.html">TC-SYS-003 report</a></td><td>Tested with PII_API_TOKEN temporarily enabled</td></tr><tr><td>SYS-004</td><td>Enforce HTTPS-only transport for all API traffic</td><td>BLOCKED</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-004.html">TC-SYS-004 report</a></td><td>No HTTPS/TLS configured in current deployment (no domain)</td></tr><tr><td>SYS-005</td><td>Persist session mappings across service restarts</td><td>PASS</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-005.html">TC-SYS-005 report</a></td><td>—</td></tr><tr><td>SYS-006</td><td>Expire and purge sessions after configurable TTL</td><td>PASS</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-006.html">TC-SYS-006 report</a></td><td>Tested via direct DB manipulation and programmatic purge invocation</td></tr><tr><td>SYS-007</td><td>Anonymize and restore text via CLI</td><td>PASS</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-007.html">TC-SYS-007 report</a></td><td>—</td></tr><tr><td>SYS-008</td><td>Expose session inspection and reset via CLI</td><td>PASS</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-008.html">TC-SYS-008 report</a></td><td>—</td></tr><tr><td>SYS-009</td><td>Expose health status via admin endpoint</td><td>PASS</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-009.html">TC-SYS-009 report</a></td><td>Loopback restriction verified with PII_ALLOW_REMOTE=0</td></tr><tr><td>SYS-010</td><td>Restrict admin session management to loopback</td><td>PASS</td><td>2026-02-23</td><td><a href="systems engineering/03_verification/TC-SYS-010.html">TC-SYS-010 report</a></td><td>Loopback restriction verified with PII_ALLOW_REMOTE=0</td></tr></tbody>
+        <tbody>
+          <tr>
+            <td>SYS-001</td><td>Anonymize PII in submitted text via HTTPS</td>
+            <td><span class="badge badge-pass">PASS</span></td><td>2026-02-26</td>
+            <td><a href="verification/TC-SYS-001.html">TC-SYS-001</a></td>
+            <td>Retest on deploy-vps via /pii/v1/anonymize returned HTTP 200</td>
+          </tr>
+          <tr>
+            <td>SYS-002</td><td>Restore placeholders to originals via HTTPS</td>
+            <td><span class="badge badge-pass">PASS</span></td><td>2026-02-26</td>
+            <td><a href="verification/TC-SYS-002.html">TC-SYS-002</a></td>
+            <td>Retest via /pii/v1/restore returned HTTP 200 and restored text</td>
+          </tr>
+          <tr>
+            <td>SYS-003</td><td>Reject unauthenticated API requests</td>
+            <td><span class="badge badge-fail">FAIL</span></td><td>2026-02-26</td>
+            <td><a href="verification/TC-SYS-003.html">TC-SYS-003</a></td>
+            <td>Unauthenticated /v1/anonymize returned HTTP 200 — auth not enforced in deployment</td>
+          </tr>
+          <tr>
+            <td>SYS-004</td><td>Enforce HTTPS-only transport for all API traffic</td>
+            <td><span class="badge badge-fail">FAIL</span></td><td>2026-02-26</td>
+            <td><a href="verification/TC-SYS-004.html">TC-SYS-004</a></td>
+            <td>HTTP on :80 active; HTTPS on :443 for /pii unavailable — no domain/TLS configured</td>
+          </tr>
+          <tr>
+            <td>SYS-007</td><td>Anonymize and restore text via CLI</td>
+            <td><span class="badge badge-pass">PASS</span></td><td>2026-02-26</td>
+            <td><a href="verification/TC-SYS-007.html">TC-SYS-007</a></td>
+            <td>CLI anonymize command succeeded in container (rc=0)</td>
+          </tr>
+          <tr>
+            <td>SYS-008</td><td>Expose session inspection and reset via CLI</td>
+            <td><span class="badge badge-pass">PASS</span></td><td>2026-02-26</td>
+            <td><a href="verification/TC-SYS-008.html">TC-SYS-008</a></td>
+            <td>CLI show/reset commands succeeded in container (rc=0)</td>
+          </tr>
+          <tr>
+            <td>SYS-009</td><td>Expose health status via admin endpoint</td>
+            <td><span class="badge badge-fail">FAIL</span></td><td>2026-02-26</td>
+            <td><a href="verification/TC-SYS-009.html">TC-SYS-009</a></td>
+            <td>/health returned HTTP 200 from both external and loopback — restriction not enforced</td>
+          </tr>
+          <tr>
+            <td>SYS-010</td><td>Restrict admin session management to loopback</td>
+            <td><span class="badge badge-fail">FAIL</span></td><td>2026-02-26</td>
+            <td><a href="verification/TC-SYS-010.html">TC-SYS-010</a></td>
+            <td>/v1/sessions/{key}/mappings returned HTTP 200 from external — restriction not enforced</td>
+          </tr>
+          <tr>
+            <td>SYS-011</td><td>Survive service restart without session data loss</td>
+            <td><span class="badge badge-draft">DRAFT</span></td><td>—</td>
+            <td>—</td><td>New requirement — test not yet developed</td>
+          </tr>
+          <tr>
+            <td>SYS-012</td><td>Reject oversized API request payloads</td>
+            <td><span class="badge badge-draft">DRAFT</span></td><td>—</td>
+            <td>—</td><td>New requirement — test not yet developed</td>
+          </tr>
+          <tr>
+            <td>SYS-013</td><td>Provide streaming-compatible restore guidance via API</td>
+            <td><span class="badge badge-draft">DRAFT</span></td><td>—</td>
+            <td>—</td><td>New requirement — test not yet developed</td>
+          </tr>
+          <tr>
+            <td>SYS-014</td><td>Honour per-request allowlist and denylist entity overrides</td>
+            <td><span class="badge badge-draft">DRAFT</span></td><td>—</td>
+            <td>—</td><td>New requirement — test not yet developed</td>
+          </tr>
+        </tbody>
       </table>
-      <p class="muted">Folder: <a href="systems engineering/03_verification/">systems engineering/03_verification/</a></p>
     </section>
 
     <section class="card">
-      <h2>Risk & watchlist</h2>
+      <h2>Verification overview — L2 sub-system requirements</h2>
+      <table>
+        <thead>
+          <tr><th>Req ID</th><th>Requirement</th><th>Status</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>SUB-DAT-004</td><td>Persist session mappings across service restarts</td><td><span class="badge badge-pass">PASS</span></td><td>Verified 2026-02-23</td></tr>
+          <tr><td>SUB-DAT-005</td><td>Expire and purge sessions after configurable TTL</td><td><span class="badge badge-pass">PASS</span></td><td>Verified 2026-02-23 via DB manipulation + programmatic purge</td></tr>
+          <tr><td>SUB-CTRL-001</td><td>Detect PERSON and ORG entities in input text</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-CTRL-002</td><td>Assign deterministic session-scoped placeholders</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-CTRL-003</td><td>Replace entity spans with placeholders in source text</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-CTRL-004</td><td>Report service health including vault connectivity</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-CTRL-005</td><td>Apply allowlist and denylist filters before placeholder assignment</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-DAT-001</td><td>Persist mapping records atomically to SQLite vault</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-DAT-002</td><td>Initialise SQLite schema on first startup</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-DAT-003</td><td>Purge expired sessions and cascade-delete their mappings</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-SEC-001</td><td>Validate Bearer Token on all /v1/* requests</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-SEC-002</td><td>Enforce request payload size limit</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-SEC-003</td><td>Configure Caddy to terminate TLS and enforce minimum protocol</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-SEC-004</td><td>Bind admin and health endpoints to loopback interface only</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-INT-001</td><td>CLI commands invoke library functions directly without HTTP</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-INT-002</td><td>CLI --json flag emits machine-readable output</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+          <tr><td>SUB-INT-003</td><td>Implement rolling-buffer restore for streamed chunks</td><td><span class="badge badge-draft">DRAFT</span></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Risk &amp; watchlist</h2>
       <table>
         <thead><tr><th>ID</th><th>Item</th><th>Severity</th><th>Comment</th></tr></thead>
-        <tbody><tr><td>SYS-001</td><td>Anonymize PII in submitted text via HTTPS</td><td><b>WATCH</b></td><td>Cold-start latency 5.56s marginally exceeds 5s threshold; subsequent requests &lt;1s</td></tr><tr><td>SYS-004</td><td>Enforce HTTPS-only transport for all API traffic</td><td><b>BLOCKED</b></td><td>No HTTPS/TLS configured in current deployment (no domain)</td></tr></tbody>
+        <tbody>
+          <tr><td>SYS-003</td><td>Reject unauthenticated API requests</td><td class="bad"><b>FAIL</b></td><td>Auth (PII_API_TOKEN) not enforced in current deployment config — needs env var set + restart</td></tr>
+          <tr><td>SYS-004</td><td>Enforce HTTPS-only transport</td><td class="bad"><b>FAIL</b></td><td>No domain/TLS configured; HTTP-only on port 80</td></tr>
+          <tr><td>SYS-009</td><td>Health endpoint loopback restriction</td><td class="bad"><b>FAIL</b></td><td>/health accessible externally — PII_ALLOW_REMOTE=0 not enforced in deployment</td></tr>
+          <tr><td>SYS-010</td><td>Admin session management loopback restriction</td><td class="bad"><b>FAIL</b></td><td>Session/mapping endpoints accessible externally</td></tr>
+          <tr><td>SYS-001</td><td>Anonymize cold-start latency</td><td class="warn"><b>WATCH</b></td><td>First request ~5.5s (Presidio/spaCy model load); subsequent &lt;1s</td></tr>
+          <tr><td>—</td><td>19 Draft requirements</td><td class="warn"><b>WATCH</b></td><td>4 new L1 + 15 new L2 requirements added in v2 — verification tests not yet developed</td></tr>
+        </tbody>
       </table>
     </section>
 
     <section class="card">
-      <h2>Recommended management next moves</h2>
+      <h2>Recommended next moves</h2>
       <ol>
-        <li><b>Close SYS-004:</b> provision domain + TLS in Caddy, rerun TC-SYS-004, update verification status.</li>
-        <li><b>Performance hardening:</b> reduce anonymize cold-start latency (SYS-001 note) by pre-warming analyzer or tuning startup path.</li>
+        <li><b>Fix deployment config for SYS-003, SYS-009, SYS-010:</b> set <code>PII_API_TOKEN</code> env var and <code>PII_ALLOW_REMOTE=0</code> in docker-compose, restart, retest. These are config gaps — the code already supports these features.</li>
+        <li><b>Close SYS-004:</b> provision domain + TLS in Caddy, rerun TC-SYS-004.</li>
+        <li><b>Develop verification tests</b> for the 4 new L1 requirements (SYS-011 to SYS-014) and 15 new L2 requirements.</li>
+        <li><b>Performance hardening:</b> reduce anonymize cold-start latency via pre-warming or startup path tuning.</li>
         <li><b>Publish baseline:</b> tag release and circulate this report + test evidence as project completion pack.</li>
       </ol>
     </section>
+
+    <footer style="margin-top:24px; padding:12px; text-align:center; color:var(--muted); font-size:0.85rem;">
+      Generated 2026-02-26 · PII Anonymizer Sidecar · Verbal Dynamics AI
+    </footer>
   </div>
 </body>
 </html>

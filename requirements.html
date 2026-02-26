@@ -1,118 +1,376 @@
-<!doctype html><html><head><meta charset='utf-8'><title>Requirements Dashboard</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Requirements Validation Report</title>
 <style>
-body{font-family:Inter,Segoe UI,Arial,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;line-height:1.45;background:#0b1020;color:#eaf0ff}
-a{color:#7ab8ff} .muted{color:#99a3c7}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.card{background:#121a33;border:1px solid #22305f;border-radius:10px;padding:12px}
-.req-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.req-card{background:#121a33;border:1px solid #22305f;border-radius:10px;padding:10px}
-.head{padding:6px 8px;background:#162041;border-radius:8px;margin-bottom:8px}
-.meta{font-size:.9rem;color:#b9c3e0;margin-bottom:4px}
-table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{border:1px solid #2a3c73;padding:7px}th{background:#192751;text-align:left}
-@media (max-width:900px){.req-grid{grid-template-columns:1fr}}
-</style></head><body>
-<h1>System Requirements Dashboard</h1>
-<p class='muted'>Readable management view of requirement objects, verification status, and evidence links.</p>
-<div class='grid'>
-  <div class='card'><div class='muted'>Total requirement objects</div><div><b>23</b></div></div>
-  <div class='card'><div class='muted'>L1 system requirements</div><div><b>10</b></div></div>
-  <div class='card'><div class='muted'>L2/sub-requirements</div><div><b>13</b></div></div>
-  <div class='card'><div class='muted'>Verification summary (L1)</div><div>PASS 9 · BLOCKED 1 · FAIL 0</div></div>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; color: #333; }
+  .header { background: #1a2332; color: white; padding: 24px 40px; }
+  .header h1 { margin: 0 0 4px 0; font-size: 22px; }
+  .header p { margin: 0; color: #8a9bb0; font-size: 13px; }
+  .content { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .card .value { font-size: 32px; font-weight: 700; }
+  .card.pass .value { color: #27ae60; }
+  .card.fail .value { color: #e74c3c; }
+  .section { background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .section h2 { margin: 0 0 16px 0; font-size: 16px; color: #1a2332; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; padding: 10px 12px; background: #f5f6f8; color: #555; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; }
+  td { padding: 12px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+  tr:hover td { background: #fafbfc; }
+</style>
+<script>
+function toggleDetail(id) {
+  var el = document.getElementById('detail-' + id);
+  el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+}
+</script>
+</head>
+<body>
+<div class="header">
+  <h1>Requirements Validation Report</h1>
+  <p>Generated: 2026-02-26T12:50:33.024861+00:00Z · 29 requirements analyzed</p>
 </div>
-<p>Related reports: <a href='quality_report.html'>quality_report.html</a> · <a href='traceability_graph.html'>traceability_graph.html</a></p>
-<h2>L1 Requirements (business-critical)</h2>
-<div class='req-grid'>
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #38d996'><b>SYS-001</b> · Anonymize PII in submitted text via HTTPS</div>
-        <div class='meta'>Status: <b>PASS</b> · Method: Test · Test Case: TC-SYS-001</div>
-        <p>The system shall replace all detected PERSON and ORG entities in a submitted text payload with deterministic session-scoped placeholders and return the anonymized text with entity mapping metadata within 5 seconds of receiving a valid authenticated HTTPS request.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: Cold-start latency 5.56s marginally exceeds 5s threshold; subsequent requests &lt;1s</div>
-        <div><a href='verification/TC-SYS-001.html'>Open test evidence</a></div>
-      </div>
-    
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #38d996'><b>SYS-002</b> · Restore placeholders to originals via HTTPS</div>
-        <div class='meta'>Status: <b>PASS</b> · Method: Test · Test Case: TC-SYS-002</div>
-        <p>The system shall replace all recognized session-scoped placeholders in a submitted text payload with their original mapped values and return the restored text within 5 seconds of receiving a valid authenticated HTTPS request.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: —</div>
-        <div><a href='verification/TC-SYS-002.html'>Open test evidence</a></div>
-      </div>
-    
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #38d996'><b>SYS-003</b> · Reject unauthenticated API requests</div>
-        <div class='meta'>Status: <b>PASS</b> · Method: Test · Test Case: TC-SYS-003</div>
-        <p>The system shall reject any HTTPS request to /v1/* that does not present a valid Bearer Token by returning HTTP 401, without processing the request payload.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: Tested with PII_API_TOKEN temporarily enabled</div>
-        <div><a href='verification/TC-SYS-003.html'>Open test evidence</a></div>
-      </div>
-    
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #f6c453'><b>SYS-004</b> · Enforce HTTPS-only transport for all API traffic</div>
-        <div class='meta'>Status: <b>BLOCKED</b> · Method: Test · Test Case: TC-SYS-004</div>
-        <p>The system shall refuse all plaintext HTTP connections on the public network interface and serve all API traffic exclusively over TLS 1.2 or higher.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: No HTTPS/TLS configured in current deployment (no domain)</div>
-        <div><a href='verification/TC-SYS-004.html'>Open test evidence</a></div>
-      </div>
-    
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #38d996'><b>SYS-005</b> · Persist session mappings across service restarts</div>
-        <div class='meta'>Status: <b>PASS</b> · Method: Test · Test Case: TC-SYS-005</div>
-        <p>The system shall retain all session mappings in non-volatile storage such that a mapping created before a service restart is retrievable and yields correct restore results after the restart.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: —</div>
-        <div><a href='verification/TC-SYS-005.html'>Open test evidence</a></div>
-      </div>
-    
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #38d996'><b>SYS-006</b> · Expire and purge sessions after configurable TTL</div>
-        <div class='meta'>Status: <b>PASS</b> · Method: Test · Test Case: TC-SYS-006</div>
-        <p>The system shall automatically delete all session mappings whose age exceeds the configured TTL value, and shall do so without requiring a manual operator action.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: Tested via direct DB manipulation and programmatic purge invocation</div>
-        <div><a href='verification/TC-SYS-006.html'>Open test evidence</a></div>
-      </div>
-    
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #38d996'><b>SYS-007</b> · Anonymize and restore text via CLI</div>
-        <div class='meta'>Status: <b>PASS</b> · Method: Demonstration · Test Case: TC-SYS-007</div>
-        <p>The system shall execute anonymize or restore operations issued as CLI commands against a specified session and return results to stdout within 10 seconds.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: —</div>
-        <div><a href='verification/TC-SYS-007.html'>Open test evidence</a></div>
-      </div>
-    
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #38d996'><b>SYS-008</b> · Expose session inspection and reset via CLI</div>
-        <div class='meta'>Status: <b>PASS</b> · Method: Demonstration · Test Case: TC-SYS-008</div>
-        <p>The system shall allow a CLI operator to inspect all mappings for a session and to reset a session, with results returned to stdout.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: —</div>
-        <div><a href='verification/TC-SYS-008.html'>Open test evidence</a></div>
-      </div>
-    
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #38d996'><b>SYS-009</b> · Expose health status via admin endpoint</div>
-        <div class='meta'>Status: <b>PASS</b> · Method: Test · Test Case: TC-SYS-009</div>
-        <p>The system shall respond to a health check request on GET /health from a loopback address with HTTP 200 and a machine-readable status payload within 2 seconds.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: Loopback restriction verified with PII_ALLOW_REMOTE=0</div>
-        <div><a href='verification/TC-SYS-009.html'>Open test evidence</a></div>
-      </div>
-    
-      <div class='req-card'>
-        <div class='head' style='border-left:6px solid #38d996'><b>SYS-010</b> · Restrict admin session management to loopback</div>
-        <div class='meta'>Status: <b>PASS</b> · Method: Test · Test Case: TC-SYS-010</div>
-        <p>The system shall process session inspection and deletion requests on /v1/sessions/* only when the request originates from the loopback address, and shall reject such requests from any other network address with HTTP 403.</p>
-        <div class='meta'>Verification date: 2026-02-23</div>
-        <div class='meta'>Notes: Loopback restriction verified with PII_ALLOW_REMOTE=0</div>
-        <div><a href='verification/TC-SYS-010.html'>Open test evidence</a></div>
-      </div>
-    </div>
-<h2>L2 / Supporting Requirements</h2>
-<table><thead><tr><th>ID</th><th>Title</th><th>Level</th><th>Verification Method</th></tr></thead><tbody><tr><td>SUB-CTRL-001</td><td>Detect PERSON and ORG entities in input text</td><td>L2</td><td>Test</td></tr><tr><td>SUB-CTRL-002</td><td>Assign deterministic session-scoped placeholders</td><td>L2</td><td>Test</td></tr><tr><td>SUB-CTRL-003</td><td>Replace entity spans with placeholders in source text</td><td>L2</td><td>Test</td></tr><tr><td>SUB-CTRL-004</td><td>Report service health including vault connectivity</td><td>L2</td><td>Test</td></tr><tr><td>SUB-DAT-001</td><td>Persist mapping records atomically to SQLite vault</td><td>L2</td><td>Test</td></tr><tr><td>SUB-DAT-002</td><td>Initialise SQLite schema on first startup</td><td>L2</td><td>Test</td></tr><tr><td>SUB-DAT-003</td><td>Purge expired sessions and cascade-delete their mappings</td><td>L2</td><td>Test</td></tr><tr><td>SUB-SEC-001</td><td>Validate Bearer Token on all /v1/* requests</td><td>L2</td><td>Test</td></tr><tr><td>SUB-SEC-002</td><td>Enforce request payload size limit</td><td>L2</td><td>Test</td></tr><tr><td>SUB-SEC-003</td><td>Configure Caddy to terminate TLS and enforce minimum protocol version</td><td>L2</td><td>Inspection</td></tr><tr><td>SUB-SEC-004</td><td>Bind admin and health endpoints to loopback interface only</td><td>L2</td><td>Test</td></tr><tr><td>SUB-INT-001</td><td>CLI commands invoke library functions directly without HTTP</td><td>L2</td><td>Test</td></tr><tr><td>SUB-INT-002</td><td>CLI --json flag emits machine-readable output</td><td>L2</td><td>Test</td></tr></tbody></table>
-<p class='muted'>If you need the raw source format, see the repository JSON file.</p>
-</body></html>
+<div class="content">
+  <div class="cards">
+    <div class="card"><div class="label">Total</div><div class="value">29</div></div>
+    <div class="card pass"><div class="label">Passed</div><div class="value">29</div></div>
+    <div class="card fail"><div class="label">Failed</div><div class="value">0</div></div>
+    <div class="card"><div class="label">Pass Rate</div><div class="value">100%</div></div>
+  </div>
+  <div class="section">
+    <h2>Flag Summary</h2>
+    <div style="margin:4px 0"><span style="background:#f39c12;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">COMPOUND</span> <strong>7</strong> occurrences</div><div style="margin:4px 0"><span style="background:#f39c12;color:#fff;padding:2px 8px;border-radius:3px;font-size:12px">VAGUE</span> <strong>2</strong> occurrences</div>
+  </div>
+  <div class="section">
+    <h2>Requirements Detail <span style="font-size:12px;color:#888;font-weight:normal">(click a row to expand)</span></h2>
+    <table>
+      <thead><tr><th></th><th>Requirement</th><th>Level</th><th>Status</th><th>Flags</th></tr></thead>
+      <tbody>
+        <tr onclick="toggleDetail('SYS-001')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-001</strong><br><span style="color:#777;font-size:12px">Anonymize PII in submitted text via HTTPS</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td><span style="background:#f39c12;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px;margin:2px;display:inline-block;">COMPOUND</span></td>
+        </tr>
+        <tr id="detail-SYS-001" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px"><span style="color:#f39c12">ℹ Description may contain multiple obligations ('and' appears 2+ times after 'shall')</span></td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-002')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-002</strong><br><span style="color:#777;font-size:12px">Restore placeholders to originals via HTTPS</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-002" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-003')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-003</strong><br><span style="color:#777;font-size:12px">Reject unauthenticated API requests</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-003" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-004')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-004</strong><br><span style="color:#777;font-size:12px">Enforce HTTPS-only transport for all API traffic</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-004" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-DAT-004')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-DAT-004</strong><br><span style="color:#777;font-size:12px">Persist session mappings across service restarts</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-DAT-004" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-DAT-005')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-DAT-005</strong><br><span style="color:#777;font-size:12px">Expire and purge sessions after configurable TTL</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-DAT-005" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-007')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-007</strong><br><span style="color:#777;font-size:12px">Anonymize and restore text via CLI</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-007" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-008')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-008</strong><br><span style="color:#777;font-size:12px">Expose session inspection and reset via CLI</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-008" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-009')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-009</strong><br><span style="color:#777;font-size:12px">Expose health status via admin endpoint</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-009" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-010')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-010</strong><br><span style="color:#777;font-size:12px">Restrict admin session management to loopback</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td><span style="background:#f39c12;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px;margin:2px;display:inline-block;">COMPOUND</span></td>
+        </tr>
+        <tr id="detail-SYS-010" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px"><span style="color:#f39c12">ℹ Description may contain multiple obligations ('and' appears 2+ times after 'shall')</span></td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-011')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-011</strong><br><span style="color:#777;font-size:12px">Survive service restart without session data loss</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-011" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-CTRL-001')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-CTRL-001</strong><br><span style="color:#777;font-size:12px">Detect PERSON and ORG entities in input text</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td><span style="background:#f39c12;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px;margin:2px;display:inline-block;">COMPOUND</span></td>
+        </tr>
+        <tr id="detail-SUB-CTRL-001" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px"><span style="color:#f39c12">ℹ Description may contain multiple obligations ('and' appears 2+ times after 'shall')</span></td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-CTRL-002')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-CTRL-002</strong><br><span style="color:#777;font-size:12px">Assign deterministic session-scoped placeholders</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-CTRL-002" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-CTRL-003')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-CTRL-003</strong><br><span style="color:#777;font-size:12px">Replace entity spans with placeholders in source text</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-CTRL-003" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-CTRL-004')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-CTRL-004</strong><br><span style="color:#777;font-size:12px">Report service health including vault connectivity</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td><span style="background:#f39c12;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px;margin:2px;display:inline-block;">COMPOUND</span></td>
+        </tr>
+        <tr id="detail-SUB-CTRL-004" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px"><span style="color:#f39c12">ℹ Description may contain multiple obligations ('and' appears 2+ times after 'shall')</span></td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-DAT-001')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-DAT-001</strong><br><span style="color:#777;font-size:12px">Persist mapping records atomically to SQLite vault</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-DAT-001" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-DAT-002')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-DAT-002</strong><br><span style="color:#777;font-size:12px">Initialise SQLite schema on first startup</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td><span style="background:#f39c12;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px;margin:2px;display:inline-block;">COMPOUND</span></td>
+        </tr>
+        <tr id="detail-SUB-DAT-002" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px"><span style="color:#f39c12">ℹ Description may contain multiple obligations ('and' appears 2+ times after 'shall')</span></td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-DAT-003')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-DAT-003</strong><br><span style="color:#777;font-size:12px">Purge expired sessions and cascade-delete their mappings</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-DAT-003" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-SEC-001')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-SEC-001</strong><br><span style="color:#777;font-size:12px">Validate Bearer Token on all /v1/* requests</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-SEC-001" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-SEC-002')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-SEC-002</strong><br><span style="color:#777;font-size:12px">Enforce request payload size limit</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-SEC-002" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-SEC-003')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-SEC-003</strong><br><span style="color:#777;font-size:12px">Configure Caddy to terminate TLS and enforce minimum protocol version</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-SEC-003" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-SEC-004')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-SEC-004</strong><br><span style="color:#777;font-size:12px">Bind admin and health endpoints to loopback interface only</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td><span style="background:#f39c12;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px;margin:2px;display:inline-block;">COMPOUND</span> <span style="background:#f39c12;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px;margin:2px;display:inline-block;">VAGUE</span></td>
+        </tr>
+        <tr id="detail-SUB-SEC-004" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px"><span style="color:#f39c12">ℹ Description may contain multiple obligations ('and' appears 2+ times after 'shall')</span><br><span style="color:#f39c12">ℹ Description contains vague term: 'fast'</span></td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-INT-001')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-INT-001</strong><br><span style="color:#777;font-size:12px">CLI commands invoke library functions directly without HTTP</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td><span style="background:#f39c12;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px;margin:2px;display:inline-block;">VAGUE</span></td>
+        </tr>
+        <tr id="detail-SUB-INT-001" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px"><span style="color:#f39c12">ℹ Description contains vague term: 'fast'</span></td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-INT-002')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-INT-002</strong><br><span style="color:#777;font-size:12px">CLI --json flag emits machine-readable output</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-INT-002" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-012')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-012</strong><br><span style="color:#777;font-size:12px">Reject oversized API request payloads</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-012" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-013')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-013</strong><br><span style="color:#777;font-size:12px">Provide streaming-compatible restore guidance via API</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-013" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SYS-014')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SYS-014</strong><br><span style="color:#777;font-size:12px">Honour per-request allowlist and denylist entity overrides</span></td>
+          <td><span style="color:#2980b9;font-weight:bold">L1</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SYS-014" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-INT-003')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-INT-003</strong><br><span style="color:#777;font-size:12px">Implement rolling-buffer restore for streamed chunks</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td>—</td>
+        </tr>
+        <tr id="detail-SUB-INT-003" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px">No issues.</td>
+        </tr>
+        
+        <tr onclick="toggleDetail('SUB-CTRL-005')" style="cursor:pointer;">
+          <td style="text-align:center">✅</td>
+          <td><strong>SUB-CTRL-005</strong><br><span style="color:#777;font-size:12px">Apply allowlist and denylist filters before placeholder assignment</span></td>
+          <td><span style="color:#27ae60;font-weight:bold">L2</span></td>
+          <td>Draft</td>
+          <td><span style="background:#f39c12;color:#fff;padding:2px 7px;border-radius:3px;font-size:11px;margin:2px;display:inline-block;">COMPOUND</span></td>
+        </tr>
+        <tr id="detail-SUB-CTRL-005" style="display:none;background:#f9f9f9">
+          <td colspan="5" style="padding:12px 20px;font-size:13px"><span style="color:#f39c12">ℹ Description may contain multiple obligations ('and' appears 2+ times after 'shall')</span></td>
+        </tr>
+        </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

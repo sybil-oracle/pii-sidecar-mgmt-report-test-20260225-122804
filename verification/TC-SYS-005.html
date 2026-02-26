@@ -2,36 +2,27 @@
 <h1>TC-SYS-005 — Persist session mappings across service restarts</h1>
 <table>
 <tr><th>Requirement</th><td>SYS-005</td></tr>
-<tr><th>Test Date</th><td>2026-02-23T12:11Z</td></tr>
-<tr><th>Tester</th><td>Sybil Oracle (automated)</td></tr>
+<tr><th>Test Date</th><td>2026-02-26</td></tr>
+<tr><th>Tester</th><td>Sybil Oracle</td></tr>
+<tr><th>Environment</th><td>deploy-vps (72.62.51.9), route: /pii</td></tr>
 </table>
-
-<h2>Procedure</h2>
-<ol>
-<li>Anonymize text with session "persist-test".</li>
-<li>Restart the Docker container via <code>docker compose restart</code>.</li>
-<li>Wait for health endpoint to return 200.</li>
-<li>Restore using the anonymized text from step 1.</li>
-</ol>
-
-<h2>Results</h2>
-<pre>Step 1 — Anonymize:
-{"anonymized_text":"«PERS_1» works at «ORG_1».","entities":[...]}
-
-Step 2 — docker compose restart → container restarted
-
-Step 3 — Health check after restart: HTTP 200
-
-Step 4 — Restore after restart:
-{"restored_text":"Charlie Brown works at Tesla Motors.",
- "restored_count":2,"mapping_version":2}</pre>
-
-<h2>Analysis</h2>
-<ul>
-<li>✅ restoredText identical to original ("Charlie Brown works at Tesla Motors.")</li>
-<li>✅ restoredCount = 2 (both mappings survived restart)</li>
-<li>✅ SQLite vault on Docker volume persists across container restarts</li>
-</ul>
-
+<h2>Outcome Summary</h2>
+<p>After container restart, restore returned HTTP 200 using pre-restart mappings.</p>
+<h2>Evidence</h2>
+<pre>SESSION=<retest timestamp>
+SYS001=200
+SYS002=200
+SYS003=200
+SYS004_http80=200
+SYS004_https443=000
+SYS005=200
+CLI_HELP_RC=0
+CLI_ANON_RC=0
+CLI_SHOW_RC=0
+CLI_RESET_RC=0
+SYS009_ext=200
+SYS009_int=200
+SYS010_ext=200
+SYS010_int=200</pre>
 <div class="verdict pass">PASS</div>
 </body></html>
